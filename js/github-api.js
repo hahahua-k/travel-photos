@@ -189,41 +189,68 @@ const GitHubAPI = {
                 const result = await new Promise((resolve, reject) => {
                     const xhr = new XMLHttpRequest();
                     xhr.open('PUT', `https://api.github.com/repos/${this.owner}/${this.repo}/contents/${path}`);
+                    xhr.timeout = 300000;
                     
                     const headers = this.getHeaders();
                     for (const [key, value] of Object.entries(headers)) {
                         xhr.setRequestHeader(key, value);
                     }
 
+                    let uploadComplete = false;
+
                     xhr.upload.onprogress = (e) => {
                         if (onProgress && e.lengthComputable) {
                             onProgress(e.loaded, actualBodySize);
+                            if (e.loaded >= e.total) {
+                                uploadComplete = true;
+                            }
                         }
                     };
 
                     xhr.onload = () => {
                         if (xhr.status >= 200 && xhr.status < 300) {
-                            const data = JSON.parse(xhr.responseText);
-                            resolve(data.content.download_url);
+                            try {
+                                const data = JSON.parse(xhr.responseText);
+                                resolve(data.content.download_url);
+                            } catch (e) {
+                                reject(new Error('响应解析失败'));
+                            }
+                        } else if (xhr.status === 409) {
+                            resolve(null);
                         } else {
                             reject(new Error(`上传失败: ${xhr.status}`));
                         }
                     };
 
-                    xhr.onerror = () => reject(new Error('网络错误'));
+                    xhr.onerror = () => {
+                        if (uploadComplete) {
+                            reject(new Error('上传已完成但响应丢失，请检查是否重复'));
+                        } else {
+                            reject(new Error('网络错误'));
+                        }
+                    };
+
+                    xhr.ontimeout = () => reject(new Error('上传超时'));
                     xhr.send(bodyStr);
                 });
 
-                return result;
+                if (result !== null) {
+                    return result;
+                }
+
+                if (attempt < maxRetries) {
+                    await new Promise(resolve => setTimeout(resolve, 2000 * attempt));
+                }
             } catch (error) {
                 lastError = error;
+                console.warn(`上传尝试 ${attempt} 失败:`, error.message);
                 if (attempt < maxRetries) {
-                    await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+                    await new Promise(resolve => setTimeout(resolve, 2000 * attempt));
                 }
             }
         }
 
-        console.error('上传图片失败:', lastError);
+        console.error('上传图片最终失败:', lastError);
         return null;
     },
 
