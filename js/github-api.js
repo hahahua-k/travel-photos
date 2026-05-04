@@ -184,7 +184,7 @@ const GitHubAPI = {
                 }
 
                 const bodyStr = JSON.stringify(body);
-                const bodySize = new Blob([bodyStr]).size;
+                const actualBodySize = new Blob([bodyStr]).size;
 
                 const result = await new Promise((resolve, reject) => {
                     const xhr = new XMLHttpRequest();
@@ -197,7 +197,7 @@ const GitHubAPI = {
 
                     xhr.upload.onprogress = (e) => {
                         if (onProgress && e.lengthComputable) {
-                            onProgress(e.loaded, e.total);
+                            onProgress(e.loaded, actualBodySize);
                         }
                     };
 

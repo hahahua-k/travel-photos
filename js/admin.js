@@ -260,26 +260,24 @@ const Admin = {
 
             const mainSize = uploadFile.size;
             const thumbSize = thumbFile ? thumbFile.size : 0;
-            const totalUploadSize = mainSize + thumbSize;
-            let uploadedBytes = 0;
 
-            this.updateLoading(`正在上传原图 (${currentFileIndex}/${totalFiles})`, `${file.name} (${this.formatSize(mainSize)})`, true);
+            this.updateLoading(`正在上传原图 (${currentFileIndex}/${totalFiles})`, file.name, true);
             this.updateProgress(0);
 
             const url = await GitHubAPI.uploadImage(mainPath, uploadFile, (loaded, total) => {
-                uploadedBytes = loaded;
-                const percent = Math.floor((loaded / totalUploadSize) * 100);
+                const percent = Math.min(Math.floor((loaded / total) * 100), 100);
                 this.updateProgress(percent);
                 this.updateLoadingDetail(`${this.formatSize(loaded)} / ${this.formatSize(total)}`);
             });
 
             let thumbUrl = null;
             if (thumbFile) {
-                this.updateLoading(`正在上传缩略图 (${currentFileIndex}/${totalFiles})`, `${file.name} (${this.formatSize(thumbSize)})`, true);
+                this.updateLoading(`正在上传缩略图 (${currentFileIndex}/${totalFiles})`, file.name, true);
+                this.updateProgress(0);
                 thumbUrl = await GitHubAPI.uploadImage(thumbPath, thumbFile, (loaded, total) => {
-                    const percent = Math.floor((mainSize + loaded) / totalUploadSize * 100);
+                    const percent = Math.min(Math.floor((loaded / total) * 100), 100);
                     this.updateProgress(percent);
-                    this.updateLoadingDetail(`${this.formatSize(mainSize + loaded)} / ${this.formatSize(totalUploadSize)}`);
+                    this.updateLoadingDetail(`${this.formatSize(loaded)} / ${this.formatSize(total)}`);
                 });
             }
 
