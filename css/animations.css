@@ -1,85 +1,42 @@
 /* 淡入动画 */
 @keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
-/* 从左淡入 */
 @keyframes fadeInLeft {
-    from {
-        opacity: 0;
-        transform: translateX(-30px);
-    }
-    to {
-        opacity: 1;
-        transform: translateX(0);
-    }
+    from { opacity: 0; transform: translateX(-30px); }
+    to { opacity: 1; transform: translateX(0); }
 }
 
-/* 从右淡入 */
 @keyframes fadeInRight {
-    from {
-        opacity: 0;
-        transform: translateX(30px);
-    }
-    to {
-        opacity: 1;
-        transform: translateX(0);
-    }
+    from { opacity: 0; transform: translateX(30px); }
+    to { opacity: 1; transform: translateX(0); }
 }
 
-/* 缩放淡入 */
 @keyframes scaleIn {
-    from {
-        opacity: 0;
-        transform: scale(0.9);
-    }
-    to {
-        opacity: 1;
-        transform: scale(1);
-    }
+    from { opacity: 0; transform: scale(0.9); }
+    to { opacity: 1; transform: scale(1); }
 }
 
-/* 卡片淡入类 */
-.fade-in {
-    opacity: 0;
-    animation: fadeIn 0.6s ease forwards;
-}
+.fade-in { opacity: 0; animation: fadeIn 0.6s ease forwards; }
+.fade-in-left { opacity: 0; animation: fadeInLeft 0.6s ease forwards; }
+.fade-in-right { opacity: 0; animation: fadeInRight 0.6s ease forwards; }
+.scale-in { opacity: 0; animation: scaleIn 0.5s ease forwards; }
 
-.fade-in-left {
-    opacity: 0;
-    animation: fadeInLeft 0.6s ease forwards;
-}
-
-.fade-in-right {
-    opacity: 0;
-    animation: fadeInRight 0.6s ease forwards;
-}
-
-.scale-in {
-    opacity: 0;
-    animation: scaleIn 0.5s ease forwards;
-}
-
-/* 延迟动画 */
 .delay-1 { animation-delay: 0.1s; }
-.delay-2 { animation-delay: 0.2s; }
-.delay-3 { animation-delay: 0.3s; }
-.delay-4 { animation-delay: 0.4s; }
-.delay-5 { animation-delay: 0.5s; }
-.delay-6 { animation-delay: 0.6s; }
+.delay-2 { animation-delay: 0.15s; }
+.delay-3 { animation-delay: 0.2s; }
+.delay-4 { animation-delay: 0.25s; }
+.delay-5 { animation-delay: 0.3s; }
+.delay-6 { animation-delay: 0.35s; }
 
-/* 滚动触发动画初始状态 */
+/* 滚动触发动画 */
 .scroll-animate {
     opacity: 0;
-    transform: translateY(30px);
-    transition: opacity 0.6s ease, transform 0.6s ease;
+    transform: translateY(24px);
+    transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+                transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .scroll-animate.visible {
@@ -90,22 +47,13 @@
 /* 图片加载动画 */
 .img-loading {
     opacity: 0;
-    transition: opacity 0.4s ease;
+    transform: scale(1.02);
+    transition: opacity 0.5s ease, transform 0.5s ease;
 }
 
 .img-loaded {
     opacity: 1;
-}
-
-/* 悬停脉冲效果 */
-@keyframes pulse {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.05); }
-    100% { transform: scale(1); }
-}
-
-.pulse-hover:hover {
-    animation: pulse 0.3s ease;
+    transform: scale(1);
 }
 
 /* 旋转加载动画 */
@@ -115,29 +63,23 @@
 }
 
 .loading-spinner {
-    width: 40px;
-    height: 40px;
-    border: 4px solid #f3f3f3;
-    border-top: 4px solid var(--secondary-color);
+    width: 36px;
+    height: 36px;
+    border: 3px solid rgba(67, 97, 238, 0.1);
+    border-top: 3px solid var(--secondary-color);
     border-radius: 50%;
-    animation: spin 1s linear infinite;
-    margin: 20px auto;
+    animation: spin 0.8s linear infinite;
+    margin: 40px auto;
 }
 
 /* 弹窗动画 */
 .modal-enter {
-    animation: modalEnter 0.3s ease forwards;
+    animation: modalEnter 0.35s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
 
 @keyframes modalEnter {
-    from {
-        opacity: 0;
-        transform: scale(0.9) translateY(-20px);
-    }
-    to {
-        opacity: 1;
-        transform: scale(1) translateY(0);
-    }
+    from { opacity: 0; transform: scale(0.92) translateY(-16px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
 }
 
 /* Lightbox 动画 */
@@ -146,25 +88,19 @@
 }
 
 @keyframes lightboxEnter {
-    from {
-        opacity: 0;
-        transform: scale(0.95);
-    }
-    to {
-        opacity: 1;
-        transform: scale(1);
-    }
+    from { opacity: 0; transform: scale(0.96); }
+    to { opacity: 1; transform: scale(1); }
 }
 
 /* 错误抖动效果 */
 @keyframes shake {
     0%, 100% { transform: translateX(0); }
-    10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
-    20%, 40%, 60%, 80% { transform: translateX(5px); }
+    10%, 30%, 50%, 70%, 90% { transform: translateX(-4px); }
+    20%, 40%, 60%, 80% { transform: translateX(4px); }
 }
 
 .shake {
-    animation: shake 0.5s ease;
+    animation: shake 0.4s ease;
 }
 
 /* 渐变背景动画 */
@@ -176,5 +112,34 @@
 
 .gradient-animate {
     background-size: 200% 200%;
-    animation: gradientShift 3s ease infinite;
+    animation: gradientShift 6s ease infinite;
+}
+
+/* 页面淡入 */
+@keyframes pageIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+body {
+    animation: pageIn 0.4s ease;
+}
+
+/* 悬停光泽效果 */
+@keyframes hoverShine {
+    from { left: -100%; }
+    to { left: 200%; }
+}
+
+.card:hover .card-image-wrapper::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 60%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+    animation: hoverShine 0.8s ease;
+    z-index: 1;
+    pointer-events: none;
 }
