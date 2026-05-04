@@ -142,12 +142,13 @@ const GitHubAPI = {
     },
 
     /**
-     * 上传图片
+     * 上传图片（支持进度回调）
      * @param {string} path - 图片路径
      * @param {File} file - 图片文件
+     * @param {Function} onProgress - 进度回调 (loaded, total)
      * @returns {Promise<string|null>} - 图片 URL 或 null
      */
-    async uploadImage(path, file) {
+    async uploadImage(path, file, onProgress) {
         const maxRetries = 3;
         let lastError = null;
 
@@ -182,30 +183,38 @@ const GitHubAPI = {
                     body.sha = sha;
                 }
 
-                const response = await fetch(
-                    `https://api.github.com/repos/${this.owner}/${this.repo}/contents/${path}`,
-                    {
-                        method: 'PUT',
-                        headers: this.getHeaders(),
-                        body: JSON.stringify(body)
+                const bodyStr = JSON.stringify(body);
+                const bodySize = new Blob([bodyStr]).size;
+
+                const result = await new Promise((resolve, reject) => {
+                    const xhr = new XMLHttpRequest();
+                    xhr.open('PUT', `https://api.github.com/repos/${this.owner}/${this.repo}/contents/${path}`);
+                    
+                    const headers = this.getHeaders();
+                    for (const [key, value] of Object.entries(headers)) {
+                        xhr.setRequestHeader(key, value);
                     }
-                );
 
-                if (response.ok) {
-                    const data = await response.json();
-                    return data.content.download_url;
-                }
+                    xhr.upload.onprogress = (e) => {
+                        if (onProgress && e.lengthComputable) {
+                            onProgress(e.loaded, e.total);
+                        }
+                    };
 
-                const errorData = await response.json().catch(() => ({}));
-                lastError = new Error(`上传失败: ${response.status} - ${errorData.message || '未知错误'}`);
+                    xhr.onload = () => {
+                        if (xhr.status >= 200 && xhr.status < 300) {
+                            const data = JSON.parse(xhr.responseText);
+                            resolve(data.content.download_url);
+                        } else {
+                            reject(new Error(`上传失败: ${xhr.status}`));
+                        }
+                    };
 
-                if (response.status === 403 || response.status === 401) {
-                    throw lastError;
-                }
+                    xhr.onerror = () => reject(new Error('网络错误'));
+                    xhr.send(bodyStr);
+                });
 
-                if (attempt < maxRetries) {
-                    await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
-                }
+                return result;
             } catch (error) {
                 lastError = error;
                 if (attempt < maxRetries) {

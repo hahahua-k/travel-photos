@@ -302,9 +302,39 @@
         
         .loading-content {
             background: white;
-            padding: 30px;
-            border-radius: var(--radius);
+            padding: 30px 40px;
+            border-radius: 16px;
             text-align: center;
+            min-width: 280px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+        }
+
+        .progress-bar-wrapper {
+            width: 100%;
+        }
+
+        .progress-bar-track {
+            width: 100%;
+            height: 8px;
+            background: #e5e7eb;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #4361ee, #7209b7);
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+
+        .progress-bar-text {
+            margin-top: 8px;
+            font-size: 0.82rem;
+            color: #6b7280;
+            font-weight: 500;
+            letter-spacing: 1px;
         }
     </style>
 </head>
@@ -365,7 +395,14 @@
     <div class="loading-overlay" id="loading-overlay">
         <div class="loading-content">
             <div class="loading-spinner"></div>
-            <p style="margin-top: 15px;">处理中...</p>
+            <p id="loading-status" style="margin-top: 15px; font-weight: 600;">处理中...</p>
+            <p id="loading-detail" style="margin-top: 6px; font-size: 0.85rem; color: #6b7280;"></p>
+            <div class="progress-bar-wrapper" id="progress-wrapper" style="display: none; margin-top: 14px;">
+                <div class="progress-bar-track">
+                    <div class="progress-bar-fill" id="progress-fill"></div>
+                </div>
+                <div class="progress-bar-text" id="progress-text">0%</div>
+            </div>
         </div>
     </div>
     

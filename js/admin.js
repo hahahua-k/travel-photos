@@ -213,7 +213,6 @@ const Admin = {
         if (!region) return;
 
         this.showLoading();
-        this.showMessage('正在处理图片...', 'success');
 
         const maxSize = 50 * 1024 * 1024;
         let uploadedCount = 0;
@@ -221,7 +220,11 @@ const Admin = {
         let compressedCount = 0;
         const failedFiles = [];
 
+        const totalFiles = files.length;
+        let currentFileIndex = 0;
+
         for (const file of files) {
+            currentFileIndex++;
             let uploadFile = file;
             let wasCompressed = false;
             const fileSizeMB = file.size / 1024 / 1024;
@@ -234,7 +237,7 @@ const Admin = {
 
             if (fileSizeMB > 30 && file.type.startsWith('image/')) {
                 try {
-                    this.showMessage(`正在压缩: ${file.name} (${fileSizeMB.toFixed(1)}MB)`, 'success');
+                    this.updateLoading(`正在压缩 (${currentFileIndex}/${totalFiles})`, `${file.name} ${fileSizeMB.toFixed(1)}MB`, false);
                     uploadFile = await ImageCompressor.compress(file, 30, 0.85);
                     wasCompressed = true;
                     compressedCount++;
@@ -245,7 +248,7 @@ const Admin = {
 
             let thumbFile = null;
             try {
-                this.showMessage(`正在生成缩略图: ${file.name}`, 'success');
+                this.updateLoading(`正在生成缩略图 (${currentFileIndex}/${totalFiles})`, file.name, false);
                 thumbFile = await ImageCompressor.generateThumbnail(file, 800, 0.6);
             } catch (error) {
                 console.error('缩略图生成失败:', error);
@@ -255,12 +258,29 @@ const Admin = {
             const mainPath = `images/${this.currentRegionId}/${timestamp}-${file.name}`;
             const thumbPath = `images/${this.currentRegionId}/${timestamp}-thumb-${file.name.replace(/\.[^.]+$/, '.jpg')}`;
 
-            this.showMessage(`正在上传: ${file.name}`, 'success');
-            const url = await GitHubAPI.uploadImage(mainPath, uploadFile);
+            const mainSize = uploadFile.size;
+            const thumbSize = thumbFile ? thumbFile.size : 0;
+            const totalUploadSize = mainSize + thumbSize;
+            let uploadedBytes = 0;
+
+            this.updateLoading(`正在上传原图 (${currentFileIndex}/${totalFiles})`, `${file.name} (${this.formatSize(mainSize)})`, true);
+            this.updateProgress(0);
+
+            const url = await GitHubAPI.uploadImage(mainPath, uploadFile, (loaded, total) => {
+                uploadedBytes = loaded;
+                const percent = Math.floor((loaded / totalUploadSize) * 100);
+                this.updateProgress(percent);
+                this.updateLoadingDetail(`${this.formatSize(loaded)} / ${this.formatSize(total)}`);
+            });
 
             let thumbUrl = null;
             if (thumbFile) {
-                thumbUrl = await GitHubAPI.uploadImage(thumbPath, thumbFile);
+                this.updateLoading(`正在上传缩略图 (${currentFileIndex}/${totalFiles})`, `${file.name} (${this.formatSize(thumbSize)})`, true);
+                thumbUrl = await GitHubAPI.uploadImage(thumbPath, thumbFile, (loaded, total) => {
+                    const percent = Math.floor((mainSize + loaded) / totalUploadSize * 100);
+                    this.updateProgress(percent);
+                    this.updateLoadingDetail(`${this.formatSize(mainSize + loaded)} / ${this.formatSize(totalUploadSize)}`);
+                });
             }
 
             if (url) {
@@ -281,6 +301,8 @@ const Admin = {
             }
         }
 
+        this.updateLoading('正在保存配置...', '', false);
+        this.hideProgress();
         const success = await this.saveConfigToGitHub();
         this.renderImages();
         this.renderRegions();
@@ -357,10 +379,43 @@ const Admin = {
 
     showLoading() {
         document.getElementById('loading-overlay').classList.add('active');
+        document.getElementById('loading-status').textContent = '处理中...';
+        document.getElementById('loading-detail').textContent = '';
+        this.hideProgress();
     },
 
     hideLoading() {
         document.getElementById('loading-overlay').classList.remove('active');
+    },
+
+    updateLoading(status, detail, showProgress) {
+        document.getElementById('loading-status').textContent = status;
+        document.getElementById('loading-detail').textContent = detail || '';
+        if (showProgress) {
+            document.getElementById('progress-wrapper').style.display = 'block';
+        }
+    },
+
+    updateLoadingDetail(detail) {
+        document.getElementById('loading-detail').textContent = detail;
+    },
+
+    updateProgress(percent) {
+        document.getElementById('progress-wrapper').style.display = 'block';
+        document.getElementById('progress-fill').style.width = percent + '%';
+        document.getElementById('progress-text').textContent = percent + '%';
+    },
+
+    hideProgress() {
+        document.getElementById('progress-wrapper').style.display = 'none';
+        document.getElementById('progress-fill').style.width = '0%';
+        document.getElementById('progress-text').textContent = '0%';
+    },
+
+    formatSize(bytes) {
+        if (bytes < 1024) return bytes + ' B';
+        if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+        return (bytes / 1024 / 1024).toFixed(1) + ' MB';
     },
 
     setupEventListeners() {
