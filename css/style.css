@@ -32,6 +32,7 @@ body {
     padding: 0 24px;
 }
 
+/* ===== Header ===== */
 header {
     background: linear-gradient(135deg, var(--primary-color), #16213e, var(--secondary-color));
     color: white;
@@ -53,6 +54,16 @@ header::before {
     animation: headerGlow 8s ease-in-out infinite;
 }
 
+header::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+}
+
 @keyframes headerGlow {
     0%, 100% { transform: translate(0, 0); }
     50% { transform: translate(20px, -20px); }
@@ -63,6 +74,7 @@ header h1 {
     font-weight: 700;
     margin-bottom: 10px;
     position: relative;
+    text-shadow: 0 2px 10px rgba(0,0,0,0.2);
 }
 
 header p {
@@ -71,6 +83,7 @@ header p {
     position: relative;
 }
 
+/* ===== Card Grid ===== */
 .grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -88,21 +101,36 @@ header p {
     position: relative;
 }
 
+.card::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: var(--radius);
+    border: 1px solid rgba(0,0,0,0.04);
+    pointer-events: none;
+}
+
 .card:hover {
     transform: translateY(-6px);
     box-shadow: var(--shadow-hover);
 }
 
+.card-image-wrapper {
+    overflow: hidden;
+    height: 220px;
+    position: relative;
+}
+
 .card-image {
     width: 100%;
-    height: 220px;
+    height: 100%;
     object-fit: cover;
     display: block;
-    transition: transform 0.5s ease;
+    transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .card:hover .card-image {
-    transform: scale(1.05);
+    transform: scale(1.08);
 }
 
 .card-content {
@@ -135,9 +163,10 @@ header p {
     align-items: center;
     justify-content: center;
     font-size: 0.95rem;
+    z-index: 2;
 }
 
-/* Gallery Header */
+/* ===== Gallery Header ===== */
 .gallery-header {
     background: linear-gradient(135deg, var(--primary-color), #16213e, var(--secondary-color));
     color: white;
@@ -176,23 +205,83 @@ header p {
     transform: translateX(-3px);
 }
 
+.gallery-header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    position: relative;
+}
+
 .gallery-header h1 {
     font-size: 2rem;
-    position: relative;
     margin-bottom: 4px;
+    text-shadow: 0 2px 10px rgba(0,0,0,0.2);
 }
 
 .gallery-subtitle {
     font-size: 0.95rem;
     opacity: 0.7;
-    position: relative;
 }
 
-/* Gallery Grid */
+/* ===== View Toggle ===== */
+.view-toggle {
+    display: flex;
+    position: relative;
+    background: rgba(255,255,255,0.12);
+    border-radius: 10px;
+    padding: 4px;
+    backdrop-filter: blur(8px);
+    flex-shrink: 0;
+}
+
+.toggle-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border: none;
+    background: transparent;
+    color: rgba(255,255,255,0.6);
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: var(--transition);
+    position: relative;
+    z-index: 1;
+    white-space: nowrap;
+}
+
+.toggle-btn.active {
+    color: var(--primary-color);
+}
+
+.toggle-btn:hover:not(.active) {
+    color: rgba(255,255,255,0.9);
+}
+
+.toggle-slider {
+    position: absolute;
+    top: 4px;
+    left: 4px;
+    width: calc(50% - 4px);
+    height: calc(100% - 8px);
+    background: white;
+    border-radius: 8px;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+/* ===== Gallery Grid ===== */
 .gallery-grid {
     columns: 3;
     column-gap: 20px;
     padding-bottom: 60px;
+}
+
+.gallery-grid-compact {
+    columns: 4;
+    column-gap: 12px;
 }
 
 .gallery-empty {
@@ -214,6 +303,11 @@ header p {
     position: relative;
 }
 
+.gallery-grid-compact .gallery-item {
+    margin-bottom: 12px;
+    border-radius: 10px;
+}
+
 .gallery-item:hover {
     transform: translateY(-4px);
     box-shadow: var(--shadow-hover);
@@ -227,6 +321,10 @@ header p {
 
 .gallery-item:hover img {
     transform: scale(1.03);
+}
+
+.gallery-grid-compact .gallery-item:hover img {
+    transform: scale(1.05);
 }
 
 .gallery-item-overlay {
@@ -257,7 +355,7 @@ header p {
     border-radius: 20px;
 }
 
-/* Lightbox */
+/* ===== Lightbox ===== */
 .lightbox {
     display: none;
     position: fixed;
@@ -386,7 +484,7 @@ header p {
     letter-spacing: 2px;
 }
 
-/* Image Badge (Admin) */
+/* ===== Image Badge (Admin) ===== */
 .image-badge {
     position: absolute;
     top: 8px;
@@ -402,7 +500,7 @@ header p {
     z-index: 1;
 }
 
-/* Modal */
+/* ===== Modal ===== */
 .modal {
     display: none;
     position: fixed;
@@ -487,6 +585,13 @@ footer {
     font-size: 0.85rem;
 }
 
+/* ===== Responsive ===== */
+@media (max-width: 1024px) {
+    .gallery-grid-compact {
+        columns: 3;
+    }
+}
+
 @media (max-width: 768px) {
     header h1 {
         font-size: 1.8rem;
@@ -502,8 +607,19 @@ footer {
         column-gap: 14px;
     }
 
+    .gallery-grid-compact {
+        columns: 3;
+        column-gap: 10px;
+    }
+
     .gallery-item {
         margin-bottom: 14px;
+    }
+
+    .gallery-header-top {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
     }
 
     .lightbox-prev {
@@ -526,8 +642,10 @@ footer {
 }
 
 @media (max-width: 480px) {
-    .gallery-grid {
-        columns: 1;
+    .gallery-grid,
+    .gallery-grid-compact {
+        columns: 2;
+        column-gap: 8px;
     }
 
     header {
@@ -545,5 +663,10 @@ footer {
     .lightbox-image-wrapper img {
         max-width: 95vw;
         max-height: 78vh;
+    }
+
+    .toggle-btn {
+        padding: 6px 12px;
+        font-size: 0.8rem;
     }
 }

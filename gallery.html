@@ -14,8 +14,23 @@
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><polyline points="12 19 5 12 12 5"/></svg>
                 返回首页
             </a>
-            <h1 id="region-title">加载中...</h1>
-            <p class="gallery-subtitle" id="region-count"></p>
+            <div class="gallery-header-top">
+                <div>
+                    <h1 id="region-title">加载中...</h1>
+                    <p class="gallery-subtitle" id="region-count"></p>
+                </div>
+                <div class="view-toggle" id="view-toggle">
+                    <button class="toggle-btn active" data-mode="thumbnail" title="缩略图模式，加载更快">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+                        缩略图
+                    </button>
+                    <button class="toggle-btn" data-mode="full" title="原图模式，查看高清大图">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                        原图
+                    </button>
+                    <div class="toggle-slider"></div>
+                </div>
+            </div>
         </div>
     </header>
 

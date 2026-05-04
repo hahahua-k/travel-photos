@@ -5,6 +5,7 @@ const Gallery = {
     config: null,
     region: null,
     currentImageIndex: 0,
+    viewMode: 'thumbnail',
 
     async init() {
         const urlParams = new URLSearchParams(window.location.search);
@@ -14,6 +15,9 @@ const Gallery = {
             this.showError('未指定相册ID');
             return;
         }
+
+        this.viewMode = localStorage.getItem('gallery_view_mode') || 'thumbnail';
+        this.updateToggleUI();
 
         GitHubAPI.init(null, 'hahahua-k', 'travel-photos');
         const savedConfig = localStorage.getItem('github_config');
@@ -25,8 +29,41 @@ const Gallery = {
         this.setupEventListeners();
     },
 
-    getImageUrl(img) {
-        return typeof img === 'string' ? img : img.url;
+    getImageUrl(img, mode) {
+        const url = typeof img === 'string' ? img : img.url;
+        if (!url) return url;
+        if (mode === 'thumbnail' && url.includes('raw.githubusercontent.com')) {
+            const separator = url.includes('?') ? '&' : '?';
+            return `${url}${separator}width=600`;
+        }
+        return url;
+    },
+
+    getThumbUrl(img) {
+        return this.getImageUrl(img, 'thumbnail');
+    },
+
+    getFullUrl(img) {
+        return this.getImageUrl(img, 'full');
+    },
+
+    toggleViewMode(mode) {
+        this.viewMode = mode;
+        localStorage.setItem('gallery_view_mode', mode);
+        this.updateToggleUI();
+        this.renderImages();
+    },
+
+    updateToggleUI() {
+        const toggle = document.getElementById('view-toggle');
+        if (!toggle) return;
+        toggle.querySelectorAll('.toggle-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.mode === this.viewMode);
+        });
+        const slider = toggle.querySelector('.toggle-slider');
+        if (slider) {
+            slider.style.transform = this.viewMode === 'full' ? 'translateX(100%)' : 'translateX(0)';
+        }
     },
 
     async loadRegion(regionId) {
@@ -53,26 +90,6 @@ const Gallery = {
         }
     },
 
-    showDemoData(regionId) {
-        this.region = {
-            id: regionId,
-            name: '示例相册',
-            images: [
-                { url: 'https://picsum.photos/800/600?random=1', compressed: false },
-                { url: 'https://picsum.photos/800/600?random=2', compressed: true },
-                { url: 'https://picsum.photos/800/600?random=3', compressed: false },
-                { url: 'https://picsum.photos/800/600?random=4', compressed: true },
-                { url: 'https://picsum.photos/800/600?random=5', compressed: false },
-                { url: 'https://picsum.photos/800/600?random=6', compressed: false }
-            ]
-        };
-
-        document.getElementById('region-title').textContent = this.region.name;
-        document.getElementById('region-count').textContent = `${this.region.images.length} 张照片`;
-        document.getElementById('loading').style.display = 'none';
-        this.renderImages();
-    },
-
     renderImages() {
         const grid = document.getElementById('gallery-grid');
         grid.innerHTML = '';
@@ -82,22 +99,41 @@ const Gallery = {
             return;
         }
 
+        const isThumbnail = this.viewMode === 'thumbnail';
+        grid.classList.toggle('gallery-grid-compact', isThumbnail);
+
         this.region.images.forEach((img, index) => {
-            const url = this.getImageUrl(img);
+            const thumbUrl = this.getThumbUrl(img);
             const item = document.createElement('div');
             item.className = 'gallery-item scroll-animate';
             item.dataset.index = index;
 
-            item.innerHTML = `
-                <img src="${url}"
-                     alt="照片 ${index + 1}"
-                     class="img-loading"
-                     onerror="this.parentElement.style.display='none'"
-                     onload="this.classList.remove('img-loading'); this.classList.add('img-loaded')">
-                <div class="gallery-item-overlay">
-                    <span class="gallery-item-index">${index + 1}</span>
-                </div>
-            `;
+            if (isThumbnail) {
+                item.innerHTML = `
+                    <img src="${thumbUrl}"
+                         alt="照片 ${index + 1}"
+                         class="img-loading"
+                         loading="lazy"
+                         onerror="this.parentElement.style.display='none'"
+                         onload="this.classList.remove('img-loading'); this.classList.add('img-loaded')">
+                    <div class="gallery-item-overlay">
+                        <span class="gallery-item-index">${index + 1}</span>
+                    </div>
+                `;
+            } else {
+                const fullUrl = this.getFullUrl(img);
+                item.innerHTML = `
+                    <img src="${fullUrl}"
+                         alt="照片 ${index + 1}"
+                         class="img-loading"
+                         loading="lazy"
+                         onerror="this.parentElement.style.display='none'"
+                         onload="this.classList.remove('img-loading'); this.classList.add('img-loaded')">
+                    <div class="gallery-item-overlay">
+                        <span class="gallery-item-index">${index + 1}</span>
+                    </div>
+                `;
+            }
 
             item.addEventListener('click', () => this.openLightbox(index));
             grid.appendChild(item);
@@ -110,9 +146,9 @@ const Gallery = {
         this.currentImageIndex = index;
         const lightbox = document.getElementById('lightbox');
         const image = document.getElementById('lightbox-image');
-        const url = this.getImageUrl(this.region.images[index]);
+        const fullUrl = this.getFullUrl(this.region.images[index]);
 
-        image.src = url;
+        image.src = fullUrl;
         lightbox.classList.add('active');
         document.body.style.overflow = 'hidden';
         this.updateLightboxInfo();
@@ -129,13 +165,13 @@ const Gallery = {
         if (newIndex >= 0 && newIndex < this.region.images.length) {
             this.currentImageIndex = newIndex;
             const image = document.getElementById('lightbox-image');
-            const url = this.getImageUrl(this.region.images[newIndex]);
+            const fullUrl = this.getFullUrl(this.region.images[newIndex]);
 
             image.style.opacity = '0';
             image.style.transform = direction > 0 ? 'translateX(30px)' : 'translateX(-30px)';
 
             setTimeout(() => {
-                image.src = url;
+                image.src = fullUrl;
                 this.updateLightboxInfo();
                 requestAnimationFrame(() => {
                     image.style.opacity = '1';
@@ -169,10 +205,17 @@ const Gallery = {
         const closeBtn = document.getElementById('lightbox-close');
         const prevBtn = document.getElementById('lightbox-prev');
         const nextBtn = document.getElementById('lightbox-next');
+        const toggle = document.getElementById('view-toggle');
 
         closeBtn.addEventListener('click', () => this.closeLightbox());
         prevBtn.addEventListener('click', () => this.navigateLightbox(-1));
         nextBtn.addEventListener('click', () => this.navigateLightbox(1));
+
+        if (toggle) {
+            toggle.querySelectorAll('.toggle-btn').forEach(btn => {
+                btn.addEventListener('click', () => this.toggleViewMode(btn.dataset.mode));
+            });
+        }
 
         lightbox.addEventListener('click', (e) => {
             if (e.target.classList.contains('lightbox-overlay') || e.target.classList.contains('lightbox-container')) {

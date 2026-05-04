@@ -67,11 +67,13 @@ const App = {
             const imageCount = region.images ? region.images.length : 0;
 
             card.innerHTML = `
-                <img src="${region.cover || 'https://picsum.photos/400/300?random=' + index}" 
-                     alt="${region.name}" 
-                     class="card-image img-loading"
-                     onerror="this.src='https://picsum.photos/400/300?random=${index}'"
-                     onload="this.classList.remove('img-loading'); this.classList.add('img-loaded')">
+                <div class="card-image-wrapper">
+                    <img src="${region.cover || 'https://picsum.photos/400/300?random=' + index}" 
+                         alt="${region.name}" 
+                         class="card-image img-loading"
+                         onerror="this.src='https://picsum.photos/400/300?random=${index}'"
+                         onload="this.classList.remove('img-loading'); this.classList.add('img-loaded')">
+                </div>
                 <div class="card-content">
                     <h3 class="card-title">${region.name}</h3>
                     <p class="card-count">${imageCount} 张照片</p>
