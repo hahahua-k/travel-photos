@@ -30,11 +30,16 @@ const Gallery = {
     },
 
     getImageUrl(img, mode) {
-        if (typeof img === 'string') return img;
-        if (mode === 'thumbnail') {
-            return img.thumbnail || img.url;
+        const url = typeof img === 'string' ? img : (img.url || img);
+        if (!url) return url;
+        if (mode === 'thumbnail' && url.includes('raw.githubusercontent.com')) {
+            const thumb = (typeof img === 'object' && img.thumbnail) ? img.thumbnail : url;
+            return `https://wsrv.nl/?url=${encodeURIComponent(thumb)}&w=600&q=60&output=webp`;
         }
-        return img.url;
+        if (mode === 'full' && url.includes('raw.githubusercontent.com')) {
+            return `https://wsrv.nl/?url=${encodeURIComponent(url)}&w=2000&q=85`;
+        }
+        return url;
     },
 
     getThumbUrl(img) {

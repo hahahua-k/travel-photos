@@ -65,10 +65,14 @@ const App = {
             card.dataset.regionId = region.id;
 
             const imageCount = region.images ? region.images.length : 0;
+            let coverUrl = region.cover || `https://picsum.photos/400/300?random=${index}`;
+            if (coverUrl.includes('raw.githubusercontent.com')) {
+                coverUrl = `https://wsrv.nl/?url=${encodeURIComponent(coverUrl)}&w=600&q=60&output=webp`;
+            }
 
             card.innerHTML = `
                 <div class="card-image-wrapper">
-                    <img src="${region.cover || 'https://picsum.photos/400/300?random=' + index}" 
+                    <img src="${coverUrl}" 
                          alt="${region.name}" 
                          class="card-image img-loading"
                          onerror="this.src='https://picsum.photos/400/300?random=${index}'"
