@@ -186,21 +186,36 @@ const Admin = {
         if (!region) return;
 
         this.showLoading();
+        this.showMessage('正在处理图片...', 'success');
 
         const maxSize = 50 * 1024 * 1024;
         let uploadedCount = 0;
         let failedCount = 0;
+        let compressedCount = 0;
         const failedFiles = [];
 
         for (const file of files) {
+            let uploadFile = file;
+            const fileSizeMB = file.size / 1024 / 1024;
+
             if (file.size > maxSize) {
                 failedCount++;
-                failedFiles.push(`${file.name} (文件过大: ${(file.size / 1024 / 1024).toFixed(1)}MB)`);
+                failedFiles.push(`${file.name} (文件过大: ${fileSizeMB.toFixed(1)}MB)`);
                 continue;
             }
 
+            if (fileSizeMB > 30 && file.type.startsWith('image/')) {
+                try {
+                    this.showMessage(`正在压缩: ${file.name} (${fileSizeMB.toFixed(1)}MB)`, 'success');
+                    uploadFile = await ImageCompressor.compress(file, 30, 0.85);
+                    compressedCount++;
+                } catch (error) {
+                    console.error('压缩失败:', error);
+                }
+            }
+
             const path = `images/${this.currentRegionId}/${Date.now()}-${file.name}`;
-            const url = await GitHubAPI.uploadImage(path, file);
+            const url = await GitHubAPI.uploadImage(path, uploadFile);
             
             if (url) {
                 if (!region.images) region.images = [];
@@ -223,6 +238,9 @@ const Admin = {
         
         if (success && uploadedCount > 0) {
             let message = `${uploadedCount} 张图片上传成功`;
+            if (compressedCount > 0) {
+                message += `（${compressedCount} 张已压缩）`;
+            }
             if (failedCount > 0) {
                 message += `，${failedCount} 张失败`;
                 if (failedFiles.length > 0) {
