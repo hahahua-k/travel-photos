@@ -38,13 +38,12 @@ const GitHubAPI = {
      * @returns {string} - Base64 编码后的字符串
      */
     encodeBase64(str) {
-        const encoder = new TextEncoder();
-        const data = encoder.encode(str);
-        let binary = '';
-        for (let i = 0; i < data.length; i++) {
-            binary += String.fromCharCode(data[i]);
+        try {
+            return btoa(unescape(encodeURIComponent(str)));
+        } catch (error) {
+            console.error('编码失败:', error);
+            return btoa(str);
         }
-        return btoa(binary);
     },
 
     /**
@@ -53,13 +52,12 @@ const GitHubAPI = {
      * @returns {string} - 解码后的字符串
      */
     decodeBase64(base64) {
-        const binary = atob(base64);
-        const bytes = new Uint8Array(binary.length);
-        for (let i = 0; i < binary.length; i++) {
-            bytes[i] = binary.charCodeAt(i);
+        try {
+            return decodeURIComponent(escape(atob(base64)));
+        } catch (error) {
+            console.error('解码失败:', error);
+            return atob(base64);
         }
-        const decoder = new TextDecoder();
-        return decoder.decode(bytes);
     },
 
     /**
