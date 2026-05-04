@@ -33,6 +33,36 @@ const GitHubAPI = {
     },
 
     /**
+     * 将字符串编码为 Base64
+     * @param {string} str - 原始字符串
+     * @returns {string} - Base64 编码后的字符串
+     */
+    encodeBase64(str) {
+        const encoder = new TextEncoder();
+        const data = encoder.encode(str);
+        let binary = '';
+        for (let i = 0; i < data.length; i++) {
+            binary += String.fromCharCode(data[i]);
+        }
+        return btoa(binary);
+    },
+
+    /**
+     * 将 Base64 解码为字符串
+     * @param {string} base64 - Base64 编码的字符串
+     * @returns {string} - 解码后的字符串
+     */
+    decodeBase64(base64) {
+        const binary = atob(base64);
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) {
+            bytes[i] = binary.charCodeAt(i);
+        }
+        const decoder = new TextDecoder();
+        return decoder.decode(bytes);
+    },
+
+    /**
      * 读取配置文件
      * @returns {Promise<Object>} - 配置对象
      */
@@ -48,7 +78,7 @@ const GitHubAPI = {
             }
 
             const data = await response.json();
-            const content = atob(data.content);
+            const content = this.decodeBase64(data.content);
             return JSON.parse(content);
         } catch (error) {
             console.error('读取配置失败:', error);
@@ -76,7 +106,7 @@ const GitHubAPI = {
                 }
             } catch (e) {}
 
-            const content = btoa(JSON.stringify(config, null, 2));
+            const content = this.encodeBase64(JSON.stringify(config, null, 2));
             const body = {
                 message: '更新配置文件',
                 content: content,

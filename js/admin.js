@@ -110,9 +110,14 @@ const Admin = {
         }
 
         this.config.regions.push(newRegion);
-        await this.saveConfigToGitHub();
-        this.renderRegions();
-        this.showMessage(`相册"${name}"创建成功`, 'success');
+        const success = await this.saveConfigToGitHub();
+        if (success) {
+            this.renderRegions();
+            this.showMessage(`相册"${name}"创建成功`, 'success');
+        } else {
+            this.config.regions.pop();
+            this.showMessage('创建失败，请检查网络和 Token 权限', 'error');
+        }
     },
 
     async editRegion(regionId) {
@@ -122,19 +127,31 @@ const Admin = {
         const newName = prompt('请输入新的相册名称:', region.name);
         if (!newName || newName === region.name) return;
 
+        const oldName = region.name;
         region.name = newName;
-        await this.saveConfigToGitHub();
-        this.renderRegions();
-        this.showMessage('相册名称已更新', 'success');
+        const success = await this.saveConfigToGitHub();
+        if (success) {
+            this.renderRegions();
+            this.showMessage('相册名称已更新', 'success');
+        } else {
+            region.name = oldName;
+            this.showMessage('更新失败，请检查网络和 Token 权限', 'error');
+        }
     },
 
     async deleteRegion(regionId) {
         if (!confirm('确定要删除这个相册吗？此操作不可撤销。')) return;
 
+        const deletedRegion = this.config.regions.find(r => r.id === regionId);
         this.config.regions = this.config.regions.filter(r => r.id !== regionId);
-        await this.saveConfigToGitHub();
-        this.renderRegions();
-        this.showMessage('相册已删除', 'success');
+        const success = await this.saveConfigToGitHub();
+        if (success) {
+            this.renderRegions();
+            this.showMessage('相册已删除', 'success');
+        } else {
+            this.config.regions.push(deletedRegion);
+            this.showMessage('删除失败，请检查网络和 Token 权限', 'error');
+        }
     },
 
     manageImages(regionId) {
@@ -170,6 +187,7 @@ const Admin = {
 
         this.showLoading();
 
+        let uploadedCount = 0;
         for (const file of files) {
             const path = `images/${this.currentRegionId}/${Date.now()}-${file.name}`;
             const url = await GitHubAPI.uploadImage(path, file);
@@ -181,14 +199,22 @@ const Admin = {
                 if (!region.cover) {
                     region.cover = url;
                 }
+                uploadedCount++;
             }
         }
 
-        await this.saveConfigToGitHub();
+        const success = await this.saveConfigToGitHub();
         this.renderImages();
         this.renderRegions();
         this.hideLoading();
-        this.showMessage(`${files.length} 张图片上传成功`, 'success');
+        
+        if (success && uploadedCount > 0) {
+            this.showMessage(`${uploadedCount} 张图片上传成功`, 'success');
+        } else if (!success) {
+            this.showMessage('保存配置失败，请检查网络和 Token 权限', 'error');
+        } else {
+            this.showMessage('图片上传失败', 'error');
+        }
     },
 
     async deleteImage(index) {
@@ -197,22 +223,36 @@ const Admin = {
         const region = this.config.regions.find(r => r.id === this.currentRegionId);
         if (!region) return;
 
+        const deletedImage = region.images[index];
         region.images.splice(index, 1);
         
         if (region.cover && !region.images.includes(region.cover)) {
             region.cover = region.images[0] || null;
         }
 
-        await this.saveConfigToGitHub();
-        this.renderImages();
-        this.renderRegions();
-        this.showMessage('图片已删除', 'success');
+        const success = await this.saveConfigToGitHub();
+        if (success) {
+            this.renderImages();
+            this.renderRegions();
+            this.showMessage('图片已删除', 'success');
+        } else {
+            region.images.splice(index, 0, deletedImage);
+            this.showMessage('删除失败，请检查网络和 Token 权限', 'error');
+        }
     },
 
     async saveConfigToGitHub() {
-        const success = await GitHubAPI.saveConfig(this.config);
-        if (!success) {
-            this.showMessage('保存到 GitHub 失败', 'error');
+        try {
+            const success = await GitHubAPI.saveConfig(this.config);
+            if (!success) {
+                this.showMessage('保存到 GitHub 失败', 'error');
+                return false;
+            }
+            return true;
+        } catch (error) {
+            console.error('保存配置失败:', error);
+            this.showMessage('保存到 GitHub 失败: ' + error.message, 'error');
+            return false;
         }
     },
 
