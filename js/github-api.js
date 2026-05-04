@@ -61,14 +61,24 @@ const GitHubAPI = {
     },
 
     /**
-     * 读取配置文件
+     * 读取配置文件（支持无 Token 的公开读取）
      * @returns {Promise<Object>} - 配置对象
      */
     async getConfig() {
         try {
+            const rawUrl = `https://raw.githubusercontent.com/${this.owner}/${this.repo}/${this.branch}/config.json`;
+            const rawResponse = await fetch(rawUrl);
+            if (rawResponse.ok) {
+                const text = await rawResponse.text();
+                return JSON.parse(text);
+            }
+        } catch (e) {}
+
+        try {
+            const headers = this.token ? this.getHeaders() : {};
             const response = await fetch(
                 `https://api.github.com/repos/${this.owner}/${this.repo}/contents/config.json`,
-                { headers: this.getHeaders() }
+                { headers }
             );
 
             if (response.status === 404) {

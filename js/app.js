@@ -6,14 +6,13 @@ const App = {
     currentRegion: null,
 
     async init() {
+        GitHubAPI.init(null, 'hahahua-k', 'travel-photos');
         const savedConfig = localStorage.getItem('github_config');
         if (savedConfig) {
             const { token, owner, repo } = JSON.parse(savedConfig);
-            GitHubAPI.init(token, owner, repo);
-            await this.loadRegions();
-        } else {
-            this.showDemoData();
+            if (token) GitHubAPI.init(token, owner, repo);
         }
+        await this.loadRegions();
         this.setupEventListeners();
         this.setupScrollAnimations();
     },
@@ -27,7 +26,8 @@ const App = {
         } catch (error) {
             console.error('加载数据失败:', error);
             loading.style.display = 'none';
-            this.showDemoData();
+            this.config = { regions: [] };
+            this.renderRegions();
         }
     },
 

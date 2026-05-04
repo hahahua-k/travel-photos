@@ -15,15 +15,13 @@ const Gallery = {
             return;
         }
 
+        GitHubAPI.init(null, 'hahahua-k', 'travel-photos');
         const savedConfig = localStorage.getItem('github_config');
         if (savedConfig) {
             const { token, owner, repo } = JSON.parse(savedConfig);
-            GitHubAPI.init(token, owner, repo);
-            await this.loadRegion(regionId);
-        } else {
-            this.showDemoData(regionId);
+            if (token) GitHubAPI.init(token, owner, repo);
         }
-
+        await this.loadRegion(regionId);
         this.setupEventListeners();
     },
 
