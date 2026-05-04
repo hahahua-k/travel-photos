@@ -12,8 +12,10 @@
     {
       "id": "region-1777892429961",
       "name": "超然楼",
-      "cover": null,
-      "images": [],
+      "cover": "https://raw.githubusercontent.com/hahahua-k/travel-photos/main/images/region-1777892429961/1777892437335-AGC_20260502_175115908.jpg",
+      "images": [
+        "https://raw.githubusercontent.com/hahahua-k/travel-photos/main/images/region-1777892429961/1777892437335-AGC_20260502_175115908.jpg"
+      ],
       "protected": false
     }
   ]
