@@ -1,12 +1,10 @@
 {
   "regions": [
     {
-      "images": [
-        "https://raw.githubusercontent.com/hahahua-k/travel-photos/main/images/test-20260504185012/1777892028888-AGC_20260502_175115908.jpg"
-      ],
+      "images": [],
       "name": "大明湖",
       "id": "test-20260504185012",
-      "cover": "https://raw.githubusercontent.com/hahahua-k/travel-photos/main/images/test-20260504185012/1777892028888-AGC_20260502_175115908.jpg",
+      "cover": null,
       "protected": false
     },
     {
