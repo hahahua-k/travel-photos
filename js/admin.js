@@ -187,8 +187,18 @@ const Admin = {
 
         this.showLoading();
 
+        const maxSize = 50 * 1024 * 1024;
         let uploadedCount = 0;
+        let failedCount = 0;
+        const failedFiles = [];
+
         for (const file of files) {
+            if (file.size > maxSize) {
+                failedCount++;
+                failedFiles.push(`${file.name} (文件过大: ${(file.size / 1024 / 1024).toFixed(1)}MB)`);
+                continue;
+            }
+
             const path = `images/${this.currentRegionId}/${Date.now()}-${file.name}`;
             const url = await GitHubAPI.uploadImage(path, file);
             
@@ -200,6 +210,9 @@ const Admin = {
                     region.cover = url;
                 }
                 uploadedCount++;
+            } else {
+                failedCount++;
+                failedFiles.push(file.name);
             }
         }
 
@@ -209,11 +222,18 @@ const Admin = {
         this.hideLoading();
         
         if (success && uploadedCount > 0) {
-            this.showMessage(`${uploadedCount} 张图片上传成功`, 'success');
+            let message = `${uploadedCount} 张图片上传成功`;
+            if (failedCount > 0) {
+                message += `，${failedCount} 张失败`;
+                if (failedFiles.length > 0) {
+                    message += `: ${failedFiles.join(', ')}`;
+                }
+            }
+            this.showMessage(message, failedCount > 0 ? 'error' : 'success');
         } else if (!success) {
             this.showMessage('保存配置失败，请检查网络和 Token 权限', 'error');
         } else {
-            this.showMessage('图片上传失败', 'error');
+            this.showMessage(`图片上传失败: ${failedFiles.join(', ')}`, 'error');
         }
     },
 

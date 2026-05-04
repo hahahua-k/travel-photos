@@ -138,53 +138,74 @@ const GitHubAPI = {
      * @returns {Promise<string|null>} - 图片 URL 或 null
      */
     async uploadImage(path, file) {
-        try {
-            const reader = new FileReader();
-            const base64 = await new Promise((resolve) => {
-                reader.onload = () => resolve(reader.result.split(',')[1]);
-                reader.readAsDataURL(file);
-            });
+        const maxRetries = 3;
+        let lastError = null;
 
-            let sha = null;
+        for (let attempt = 1; attempt <= maxRetries; attempt++) {
             try {
+                const reader = new FileReader();
+                const base64 = await new Promise((resolve, reject) => {
+                    reader.onload = () => resolve(reader.result.split(',')[1]);
+                    reader.onerror = () => reject(new Error('文件读取失败'));
+                    reader.readAsDataURL(file);
+                });
+
+                let sha = null;
+                try {
+                    const response = await fetch(
+                        `https://api.github.com/repos/${this.owner}/${this.repo}/contents/${path}`,
+                        { headers: this.getHeaders() }
+                    );
+                    if (response.ok) {
+                        const data = await response.json();
+                        sha = data.sha;
+                    }
+                } catch (e) {}
+
+                const body = {
+                    message: `上传图片: ${path}`,
+                    content: base64,
+                    branch: this.branch
+                };
+
+                if (sha) {
+                    body.sha = sha;
+                }
+
                 const response = await fetch(
                     `https://api.github.com/repos/${this.owner}/${this.repo}/contents/${path}`,
-                    { headers: this.getHeaders() }
+                    {
+                        method: 'PUT',
+                        headers: this.getHeaders(),
+                        body: JSON.stringify(body)
+                    }
                 );
+
                 if (response.ok) {
                     const data = await response.json();
-                    sha = data.sha;
+                    return data.content.download_url;
                 }
-            } catch (e) {}
 
-            const body = {
-                message: `上传图片: ${path}`,
-                content: base64,
-                branch: this.branch
-            };
+                const errorData = await response.json().catch(() => ({}));
+                lastError = new Error(`上传失败: ${response.status} - ${errorData.message || '未知错误'}`);
 
-            if (sha) {
-                body.sha = sha;
-            }
-
-            const response = await fetch(
-                `https://api.github.com/repos/${this.owner}/${this.repo}/contents/${path}`,
-                {
-                    method: 'PUT',
-                    headers: this.getHeaders(),
-                    body: JSON.stringify(body)
+                if (response.status === 403 || response.status === 401) {
+                    throw lastError;
                 }
-            );
 
-            if (response.ok) {
-                const data = await response.json();
-                return data.content.download_url;
+                if (attempt < maxRetries) {
+                    await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+                }
+            } catch (error) {
+                lastError = error;
+                if (attempt < maxRetries) {
+                    await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+                }
             }
-            return null;
-        } catch (error) {
-            console.error('上传图片失败:', error);
-            return null;
         }
+
+        console.error('上传图片失败:', lastError);
+        return null;
     },
 
     /**
