@@ -44,12 +44,31 @@ const Admin = {
             if (!this.config.regions) {
                 this.config.regions = [];
             }
+            this.migrateImageFormat();
             this.renderRegions();
         } catch (error) {
             console.error('加载配置失败:', error);
             this.config = { regions: [] };
             this.renderRegions();
         }
+    },
+
+    migrateImageFormat() {
+        if (!this.config.regions) return;
+        this.config.regions.forEach(region => {
+            if (region.images) {
+                region.images = region.images.map(img => {
+                    if (typeof img === 'string') {
+                        return { url: img, compressed: false };
+                    }
+                    return img;
+                });
+            }
+        });
+    },
+
+    getImageUrl(img) {
+        return typeof img === 'string' ? img : img.url;
     },
 
     renderRegions() {
@@ -64,10 +83,12 @@ const Admin = {
         this.config.regions.forEach(region => {
             const li = document.createElement('li');
             li.className = 'region-item';
+            const imageCount = region.images ? region.images.length : 0;
+            const compressedCount = region.images ? region.images.filter(img => img.compressed).length : 0;
             li.innerHTML = `
                 <div class="region-info">
                     <div class="region-name">${region.name} ${region.protected ? '🔒' : ''}</div>
-                    <div class="region-meta">${region.images ? region.images.length : 0} 张照片</div>
+                    <div class="region-meta">${imageCount} 张照片${compressedCount > 0 ? ` · ${compressedCount} 张已压缩` : ''}</div>
                 </div>
                 <div class="region-actions">
                     <button class="btn btn-primary btn-sm" onclick="Admin.editRegion('${region.id}')">编辑</button>
@@ -167,18 +188,23 @@ const Admin = {
     renderImages() {
         const grid = document.getElementById('image-grid');
         const region = this.config.regions.find(r => r.id === this.currentRegionId);
-        
+
         if (!region || !region.images || region.images.length === 0) {
             grid.innerHTML = '<p style="text-align: center; color: #666; grid-column: 1 / -1;">暂无图片</p>';
             return;
         }
 
-        grid.innerHTML = region.images.map((url, index) => `
-            <div class="image-item">
-                <img src="${url}" alt="图片 ${index + 1}" onerror="this.src='https://picsum.photos/150/120?random=${index}'">
-                <button class="image-delete" onclick="Admin.deleteImage(${index})">&times;</button>
-            </div>
-        `).join('');
+        grid.innerHTML = region.images.map((img, index) => {
+            const url = this.getImageUrl(img);
+            const compressed = img.compressed;
+            return `
+                <div class="image-item">
+                    <img src="${url}" alt="图片 ${index + 1}" onerror="this.src='https://picsum.photos/150/120?random=${index}'">
+                    ${compressed ? '<span class="image-badge">已压缩</span>' : ''}
+                    <button class="image-delete" onclick="Admin.deleteImage(${index})">&times;</button>
+                </div>
+            `;
+        }).join('');
     },
 
     async handleFileUpload(files) {
@@ -196,6 +222,7 @@ const Admin = {
 
         for (const file of files) {
             let uploadFile = file;
+            let wasCompressed = false;
             const fileSizeMB = file.size / 1024 / 1024;
 
             if (file.size > maxSize) {
@@ -208,6 +235,7 @@ const Admin = {
                 try {
                     this.showMessage(`正在压缩: ${file.name} (${fileSizeMB.toFixed(1)}MB)`, 'success');
                     uploadFile = await ImageCompressor.compress(file, 30, 0.85);
+                    wasCompressed = true;
                     compressedCount++;
                 } catch (error) {
                     console.error('压缩失败:', error);
@@ -216,11 +244,11 @@ const Admin = {
 
             const path = `images/${this.currentRegionId}/${Date.now()}-${file.name}`;
             const url = await GitHubAPI.uploadImage(path, uploadFile);
-            
+
             if (url) {
                 if (!region.images) region.images = [];
-                region.images.push(url);
-                
+                region.images.push({ url: url, compressed: wasCompressed });
+
                 if (!region.cover) {
                     region.cover = url;
                 }
@@ -235,7 +263,7 @@ const Admin = {
         this.renderImages();
         this.renderRegions();
         this.hideLoading();
-        
+
         if (success && uploadedCount > 0) {
             let message = `${uploadedCount} 张图片上传成功`;
             if (compressedCount > 0) {
@@ -263,9 +291,9 @@ const Admin = {
 
         const deletedImage = region.images[index];
         region.images.splice(index, 1);
-        
-        if (region.cover && !region.images.includes(region.cover)) {
-            region.cover = region.images[0] || null;
+
+        if (region.cover && !region.images.some(img => this.getImageUrl(img) === region.cover)) {
+            region.cover = region.images[0] ? this.getImageUrl(region.images[0]) : null;
         }
 
         const success = await this.saveConfigToGitHub();
@@ -299,10 +327,10 @@ const Admin = {
         message.textContent = text;
         message.className = `message ${type}`;
         message.style.display = 'block';
-        
+
         setTimeout(() => {
             message.style.display = 'none';
-        }, 3000);
+        }, 5000);
     },
 
     showLoading() {
@@ -316,12 +344,12 @@ const Admin = {
     setupEventListeners() {
         document.getElementById('save-config').addEventListener('click', () => this.saveConfig());
         document.getElementById('add-region').addEventListener('click', () => this.showAddRegionForm());
-        
+
         const uploadArea = document.getElementById('upload-area');
         const fileInput = document.getElementById('file-input');
 
         uploadArea.addEventListener('click', () => fileInput.click());
-        
+
         uploadArea.addEventListener('dragover', (e) => {
             e.preventDefault();
             uploadArea.style.borderColor = '#3498db';

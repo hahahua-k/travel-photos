@@ -27,6 +27,10 @@ const Gallery = {
         this.setupEventListeners();
     },
 
+    getImageUrl(img) {
+        return typeof img === 'string' ? img : img.url;
+    },
+
     async loadRegion(regionId) {
         const loading = document.getElementById('loading');
         try {
@@ -40,6 +44,8 @@ const Gallery = {
 
             document.title = `${this.region.name} - 旅行相册`;
             document.getElementById('region-title').textContent = this.region.name;
+            const count = this.region.images ? this.region.images.length : 0;
+            document.getElementById('region-count').textContent = `${count} 张照片`;
             loading.style.display = 'none';
             this.renderImages();
         } catch (error) {
@@ -54,16 +60,17 @@ const Gallery = {
             id: regionId,
             name: '示例相册',
             images: [
-                'https://picsum.photos/800/600?random=1',
-                'https://picsum.photos/800/600?random=2',
-                'https://picsum.photos/800/600?random=3',
-                'https://picsum.photos/800/600?random=4',
-                'https://picsum.photos/800/600?random=5',
-                'https://picsum.photos/800/600?random=6'
+                { url: 'https://picsum.photos/800/600?random=1', compressed: false },
+                { url: 'https://picsum.photos/800/600?random=2', compressed: true },
+                { url: 'https://picsum.photos/800/600?random=3', compressed: false },
+                { url: 'https://picsum.photos/800/600?random=4', compressed: true },
+                { url: 'https://picsum.photos/800/600?random=5', compressed: false },
+                { url: 'https://picsum.photos/800/600?random=6', compressed: false }
             ]
         };
 
         document.getElementById('region-title').textContent = this.region.name;
+        document.getElementById('region-count').textContent = `${this.region.images.length} 张照片`;
         document.getElementById('loading').style.display = 'none';
         this.renderImages();
     },
@@ -73,21 +80,25 @@ const Gallery = {
         grid.innerHTML = '';
 
         if (!this.region.images || this.region.images.length === 0) {
-            grid.innerHTML = '<p style="text-align: center; color: #666; padding: 40px;">暂无图片</p>';
+            grid.innerHTML = '<p class="gallery-empty">暂无图片</p>';
             return;
         }
 
-        this.region.images.forEach((imageUrl, index) => {
+        this.region.images.forEach((img, index) => {
+            const url = this.getImageUrl(img);
             const item = document.createElement('div');
             item.className = 'gallery-item scroll-animate';
             item.dataset.index = index;
 
             item.innerHTML = `
-                <img src="${imageUrl}" 
-                     alt="照片 ${index + 1}" 
+                <img src="${url}"
+                     alt="照片 ${index + 1}"
                      class="img-loading"
                      onerror="this.parentElement.style.display='none'"
                      onload="this.classList.remove('img-loading'); this.classList.add('img-loaded')">
+                <div class="gallery-item-overlay">
+                    <span class="gallery-item-index">${index + 1}</span>
+                </div>
             `;
 
             item.addEventListener('click', () => this.openLightbox(index));
@@ -101,11 +112,12 @@ const Gallery = {
         this.currentImageIndex = index;
         const lightbox = document.getElementById('lightbox');
         const image = document.getElementById('lightbox-image');
+        const url = this.getImageUrl(this.region.images[index]);
 
-        image.src = this.region.images[index];
+        image.src = url;
         lightbox.classList.add('active');
         document.body.style.overflow = 'hidden';
-        this.updateNavButtons();
+        this.updateLightboxInfo();
     },
 
     closeLightbox() {
@@ -119,22 +131,38 @@ const Gallery = {
         if (newIndex >= 0 && newIndex < this.region.images.length) {
             this.currentImageIndex = newIndex;
             const image = document.getElementById('lightbox-image');
-            image.src = this.region.images[newIndex];
-            this.updateNavButtons();
+            const url = this.getImageUrl(this.region.images[newIndex]);
+
+            image.style.opacity = '0';
+            image.style.transform = direction > 0 ? 'translateX(30px)' : 'translateX(-30px)';
+
+            setTimeout(() => {
+                image.src = url;
+                this.updateLightboxInfo();
+                requestAnimationFrame(() => {
+                    image.style.opacity = '1';
+                    image.style.transform = 'translateX(0)';
+                });
+            }, 150);
         }
     },
 
-    updateNavButtons() {
+    updateLightboxInfo() {
+        const counter = document.getElementById('lightbox-counter');
+        const total = this.region.images.length;
+        counter.textContent = `${this.currentImageIndex + 1} / ${total}`;
+
         const prevBtn = document.getElementById('lightbox-prev');
         const nextBtn = document.getElementById('lightbox-next');
-
-        prevBtn.style.visibility = this.currentImageIndex === 0 ? 'hidden' : 'visible';
-        nextBtn.style.visibility = this.currentImageIndex === this.region.images.length - 1 ? 'hidden' : 'visible';
+        prevBtn.style.opacity = this.currentImageIndex === 0 ? '0.3' : '1';
+        prevBtn.style.pointerEvents = this.currentImageIndex === 0 ? 'none' : 'auto';
+        nextBtn.style.opacity = this.currentImageIndex === total - 1 ? '0.3' : '1';
+        nextBtn.style.pointerEvents = this.currentImageIndex === total - 1 ? 'none' : 'auto';
     },
 
     showError(message) {
         const grid = document.getElementById('gallery-grid');
-        grid.innerHTML = `<p style="text-align: center; color: #e74c3c; padding: 40px;">${message}</p>`;
+        grid.innerHTML = `<p class="gallery-empty" style="color: var(--accent-color);">${message}</p>`;
         document.getElementById('loading').style.display = 'none';
     },
 
@@ -149,7 +177,9 @@ const Gallery = {
         nextBtn.addEventListener('click', () => this.navigateLightbox(1));
 
         lightbox.addEventListener('click', (e) => {
-            if (e.target === lightbox) this.closeLightbox();
+            if (e.target.classList.contains('lightbox-overlay') || e.target.classList.contains('lightbox-container')) {
+                this.closeLightbox();
+            }
         });
 
         document.addEventListener('keydown', (e) => {
