@@ -47,8 +47,14 @@
     {
       "id": "region-1777905682805",
       "name": "趵突泉",
-      "cover": null,
-      "images": [],
+      "cover": "https://raw.githubusercontent.com/hahahua-k/travel-photos/main/images/region-1777905682805/1777907511433-thumb-IMG_20260502_071931.jpg",
+      "images": [
+        {
+          "url": "https://raw.githubusercontent.com/hahahua-k/travel-photos/main/images/region-1777905682805/1777907511433-IMG_20260502_071931.jpg",
+          "thumbnail": "https://raw.githubusercontent.com/hahahua-k/travel-photos/main/images/region-1777905682805/1777907511433-thumb-IMG_20260502_071931.jpg",
+          "compressed": false
+        }
+      ],
       "protected": false
     }
   ]
