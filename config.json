@@ -8,6 +8,13 @@
       "id": "test-20260504185012",
       "cover": "https://raw.githubusercontent.com/hahahua-k/travel-photos/main/images/test-20260504185012/1777892028888-AGC_20260502_175115908.jpg",
       "protected": false
+    },
+    {
+      "id": "region-1777892429961",
+      "name": "超然楼",
+      "cover": null,
+      "images": [],
+      "protected": false
     }
   ]
 }
