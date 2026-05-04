@@ -30,13 +30,11 @@ const Gallery = {
     },
 
     getImageUrl(img, mode) {
-        const url = typeof img === 'string' ? img : img.url;
-        if (!url) return url;
-        if (mode === 'thumbnail' && url.includes('raw.githubusercontent.com')) {
-            const separator = url.includes('?') ? '&' : '?';
-            return `${url}${separator}width=600`;
+        if (typeof img === 'string') return img;
+        if (mode === 'thumbnail') {
+            return img.thumbnail || img.url;
         }
-        return url;
+        return img.url;
     },
 
     getThumbUrl(img) {

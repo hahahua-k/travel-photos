@@ -11,7 +11,7 @@ const ImageCompressor = {
      */
     async compress(file, maxSizeMB = 30, quality = 0.85) {
         const fileSizeMB = file.size / 1024 / 1024;
-        
+
         if (fileSizeMB <= maxSizeMB) {
             return file;
         }
@@ -64,6 +64,61 @@ const ImageCompressor = {
                     };
 
                     tryCompress(quality);
+                };
+                img.onerror = () => reject(new Error('图片加载失败'));
+                img.src = e.target.result;
+            };
+            reader.onerror = () => reject(new Error('文件读取失败'));
+            reader.readAsDataURL(file);
+        });
+    },
+
+    /**
+     * 生成缩略图
+     * @param {File} file - 原始图片文件
+     * @param {number} maxWidth - 最大宽度
+     * @param {number} quality - JPEG 质量 0-1
+     * @returns {Promise<File>} - 缩略图文件
+     */
+    async generateThumbnail(file, maxWidth = 800, quality = 0.6) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+
+                    let width = img.width;
+                    let height = img.height;
+
+                    if (width > maxWidth) {
+                        const ratio = maxWidth / width;
+                        width = maxWidth;
+                        height = Math.floor(height * ratio);
+                    }
+
+                    canvas.width = width;
+                    canvas.height = height;
+                    ctx.drawImage(img, 0, 0, width, height);
+
+                    canvas.toBlob((blob) => {
+                        if (!blob) {
+                            reject(new Error('缩略图生成失败'));
+                            return;
+                        }
+
+                        const thumbFile = new File([blob], `thumb_${file.name}`, {
+                            type: 'image/jpeg',
+                            lastModified: Date.now()
+                        });
+
+                        const originalKB = (file.size / 1024).toFixed(0);
+                        const thumbKB = (blob.size / 1024).toFixed(0);
+                        console.log(`缩略图生成: ${originalKB}KB -> ${thumbKB}KB (${width}x${height})`);
+
+                        resolve(thumbFile);
+                    }, 'image/jpeg', quality);
                 };
                 img.onerror = () => reject(new Error('图片加载失败'));
                 img.src = e.target.result;

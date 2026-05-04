@@ -196,10 +196,11 @@ const Admin = {
 
         grid.innerHTML = region.images.map((img, index) => {
             const url = this.getImageUrl(img);
+            const thumbUrl = (typeof img === 'object' && img.thumbnail) ? img.thumbnail : url;
             const compressed = img.compressed;
             return `
                 <div class="image-item">
-                    <img src="${url}" alt="图片 ${index + 1}" onerror="this.src='https://picsum.photos/150/120?random=${index}'">
+                    <img src="${thumbUrl}" alt="图片 ${index + 1}" onerror="this.src='https://picsum.photos/150/120?random=${index}'">
                     ${compressed ? '<span class="image-badge">已压缩</span>' : ''}
                     <button class="image-delete" onclick="Admin.deleteImage(${index})">&times;</button>
                 </div>
@@ -242,15 +243,36 @@ const Admin = {
                 }
             }
 
-            const path = `images/${this.currentRegionId}/${Date.now()}-${file.name}`;
-            const url = await GitHubAPI.uploadImage(path, uploadFile);
+            let thumbFile = null;
+            try {
+                this.showMessage(`正在生成缩略图: ${file.name}`, 'success');
+                thumbFile = await ImageCompressor.generateThumbnail(file, 800, 0.6);
+            } catch (error) {
+                console.error('缩略图生成失败:', error);
+            }
+
+            const timestamp = Date.now();
+            const mainPath = `images/${this.currentRegionId}/${timestamp}-${file.name}`;
+            const thumbPath = `images/${this.currentRegionId}/${timestamp}-thumb-${file.name.replace(/\.[^.]+$/, '.jpg')}`;
+
+            this.showMessage(`正在上传: ${file.name}`, 'success');
+            const url = await GitHubAPI.uploadImage(mainPath, uploadFile);
+
+            let thumbUrl = null;
+            if (thumbFile) {
+                thumbUrl = await GitHubAPI.uploadImage(thumbPath, thumbFile);
+            }
 
             if (url) {
                 if (!region.images) region.images = [];
-                region.images.push({ url: url, compressed: wasCompressed });
+                region.images.push({
+                    url: url,
+                    thumbnail: thumbUrl || url,
+                    compressed: wasCompressed
+                });
 
                 if (!region.cover) {
-                    region.cover = url;
+                    region.cover = thumbUrl || url;
                 }
                 uploadedCount++;
             } else {
