@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>旅行相册 - 记录美好旅程</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/animations.css">
+</head>
+<body>
+    <header class="gradient-animate">
+        <div class="container">
+            <h1>旅行相册</h1>
+            <p>记录每一段美好的旅程</p>
+        </div>
+    </header>
+
+    <main class="container">
+        <div class="grid" id="regions-grid">
+            <div class="loading-spinner" id="loading"></div>
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; 2024 旅行相册 | 由 GitHub Pages 提供支持</p>
+    </footer>
+
+    <div class="modal" id="password-modal">
+        <div class="modal-content modal-enter">
+            <h3>输入密码访问</h3>
+            <input type="password" id="password-input" placeholder="请输入访问密码" autocomplete="off">
+            <button class="btn" id="password-submit">确认访问</button>
+            <p class="error" id="password-error">密码错误，请重试</p>
+        </div>
+    </div>
+
+    <script src="js/crypto.js"></script>
+    <script src="js/github-api.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>

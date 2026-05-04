@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>图片画廊 - 旅行相册</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/animations.css">
+</head>
+<body>
+    <header class="gallery-header">
+        <div class="container">
+            <a href="index.html" class="back-btn">← 返回首页</a>
+            <h1 id="region-title">加载中...</h1>
+        </div>
+    </header>
+
+    <main class="container">
+        <div class="gallery-grid" id="gallery-grid">
+            <div class="loading-spinner" id="loading"></div>
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; 2024 旅行相册 | 由 GitHub Pages 提供支持</p>
+    </footer>
+
+    <div class="lightbox" id="lightbox">
+        <div class="lightbox-content lightbox-enter">
+            <button class="lightbox-close" id="lightbox-close">&times;</button>
+            <button class="lightbox-nav lightbox-prev" id="lightbox-prev">&#10094;</button>
+            <img src="" alt="预览图片" id="lightbox-image">
+            <button class="lightbox-nav lightbox-next" id="lightbox-next">&#10095;</button>
+        </div>
+    </div>
+
+    <script src="js/crypto.js"></script>
+    <script src="js/github-api.js"></script>
+    <script src="js/gallery.js"></script>
+</body>
+</html>
