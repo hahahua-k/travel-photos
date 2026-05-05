@@ -142,116 +142,124 @@ const GitHubAPI = {
     },
 
     /**
-     * 上传图片（支持进度回调）
+     * 检查文件是否已存在并获取 URL
+     * @param {string} path - 文件路径
+     * @returns {Promise<string|null>} - 文件 URL 或 null
+     */
+    async getFileUrlIfExists(path) {
+        try {
+            const response = await fetch(
+                `https://api.github.com/repos/${this.owner}/${this.repo}/contents/${path}`,
+                { headers: this.getHeaders() }
+            );
+            if (response.ok) {
+                const data = await response.json();
+                return data.download_url;
+            }
+        } catch (e) {}
+        return null;
+    },
+
+    /**
+     * 上传图片（支持进度回调，防重复上传）
      * @param {string} path - 图片路径
      * @param {File} file - 图片文件
      * @param {Function} onProgress - 进度回调 (loaded, total)
      * @returns {Promise<string|null>} - 图片 URL 或 null
      */
     async uploadImage(path, file, onProgress) {
-        const maxRetries = 3;
-        let lastError = null;
+        const existingUrl = await this.getFileUrlIfExists(path);
+        if (existingUrl) {
+            console.log('文件已存在，跳过上传:', path);
+            if (onProgress) onProgress(1, 1);
+            return existingUrl;
+        }
 
-        for (let attempt = 1; attempt <= maxRetries; attempt++) {
-            try {
-                const reader = new FileReader();
-                const base64 = await new Promise((resolve, reject) => {
-                    reader.onload = () => resolve(reader.result.split(',')[1]);
-                    reader.onerror = () => reject(new Error('文件读取失败'));
-                    reader.readAsDataURL(file);
-                });
+        const reader = new FileReader();
+        const base64 = await new Promise((resolve, reject) => {
+            reader.onload = () => resolve(reader.result.split(',')[1]);
+            reader.onerror = () => reject(new Error('文件读取失败'));
+            reader.readAsDataURL(file);
+        });
 
-                let sha = null;
-                try {
-                    const response = await fetch(
-                        `https://api.github.com/repos/${this.owner}/${this.repo}/contents/${path}`,
-                        { headers: this.getHeaders() }
-                    );
-                    if (response.ok) {
-                        const data = await response.json();
-                        sha = data.sha;
+        const body = {
+            message: `上传图片: ${path}`,
+            content: base64,
+            branch: this.branch
+        };
+
+        const bodyStr = JSON.stringify(body);
+        const actualBodySize = new Blob([bodyStr]).size;
+
+        return new Promise((resolve, reject) => {
+            const xhr = new XMLHttpRequest();
+            xhr.open('PUT', `https://api.github.com/repos/${this.owner}/${this.repo}/contents/${path}`);
+            xhr.timeout = 600000;
+
+            const headers = this.getHeaders();
+            for (const [key, value] of Object.entries(headers)) {
+                xhr.setRequestHeader(key, value);
+            }
+
+            let uploadDone = false;
+            let responseReceived = false;
+
+            xhr.upload.onprogress = (e) => {
+                if (onProgress && e.lengthComputable) {
+                    onProgress(e.loaded, actualBodySize);
+                    if (e.loaded >= e.total) {
+                        uploadDone = true;
                     }
-                } catch (e) {}
-
-                const body = {
-                    message: `上传图片: ${path}`,
-                    content: base64,
-                    branch: this.branch
-                };
-
-                if (sha) {
-                    body.sha = sha;
                 }
+            };
 
-                const bodyStr = JSON.stringify(body);
-                const actualBodySize = new Blob([bodyStr]).size;
-
-                const result = await new Promise((resolve, reject) => {
-                    const xhr = new XMLHttpRequest();
-                    xhr.open('PUT', `https://api.github.com/repos/${this.owner}/${this.repo}/contents/${path}`);
-                    xhr.timeout = 300000;
-                    
-                    const headers = this.getHeaders();
-                    for (const [key, value] of Object.entries(headers)) {
-                        xhr.setRequestHeader(key, value);
+            xhr.onload = () => {
+                responseReceived = true;
+                if (xhr.status >= 200 && xhr.status < 300) {
+                    try {
+                        const data = JSON.parse(xhr.responseText);
+                        resolve(data.content.download_url);
+                    } catch (e) {
+                        this.getFileUrlIfExists(path).then(url => {
+                            resolve(url);
+                        }).catch(() => reject(new Error('响应解析失败')));
                     }
+                } else if (xhr.status === 409) {
+                    this.getFileUrlIfExists(path).then(url => {
+                        resolve(url);
+                    }).catch(() => resolve(null));
+                } else {
+                    reject(new Error(`上传失败: ${xhr.status}`));
+                }
+            };
 
-                    let uploadComplete = false;
-
-                    xhr.upload.onprogress = (e) => {
-                        if (onProgress && e.lengthComputable) {
-                            onProgress(e.loaded, actualBodySize);
-                            if (e.loaded >= e.total) {
-                                uploadComplete = true;
-                            }
-                        }
-                    };
-
-                    xhr.onload = () => {
-                        if (xhr.status >= 200 && xhr.status < 300) {
-                            try {
-                                const data = JSON.parse(xhr.responseText);
-                                resolve(data.content.download_url);
-                            } catch (e) {
-                                reject(new Error('响应解析失败'));
-                            }
-                        } else if (xhr.status === 409) {
-                            resolve(null);
-                        } else {
-                            reject(new Error(`上传失败: ${xhr.status}`));
-                        }
-                    };
-
-                    xhr.onerror = () => {
-                        if (uploadComplete) {
-                            reject(new Error('上传已完成但响应丢失，请检查是否重复'));
+            xhr.onerror = () => {
+                if (uploadDone && !responseReceived) {
+                    setTimeout(async () => {
+                        const url = await this.getFileUrlIfExists(path);
+                        if (url) {
+                            resolve(url);
                         } else {
                             reject(new Error('网络错误'));
                         }
-                    };
-
-                    xhr.ontimeout = () => reject(new Error('上传超时'));
-                    xhr.send(bodyStr);
-                });
-
-                if (result !== null) {
-                    return result;
+                    }, 3000);
+                } else {
+                    reject(new Error('网络错误'));
                 }
+            };
 
-                if (attempt < maxRetries) {
-                    await new Promise(resolve => setTimeout(resolve, 2000 * attempt));
+            xhr.ontimeout = () => {
+                if (uploadDone) {
+                    this.getFileUrlIfExists(path).then(url => {
+                        resolve(url);
+                    }).catch(() => reject(new Error('上传超时')));
+                } else {
+                    reject(new Error('上传超时'));
                 }
-            } catch (error) {
-                lastError = error;
-                console.warn(`上传尝试 ${attempt} 失败:`, error.message);
-                if (attempt < maxRetries) {
-                    await new Promise(resolve => setTimeout(resolve, 2000 * attempt));
-                }
-            }
-        }
+            };
 
-        console.error('上传图片最终失败:', lastError);
-        return null;
+            xhr.send(bodyStr);
+        });
     },
 
     /**
