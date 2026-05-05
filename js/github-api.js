@@ -161,16 +161,24 @@ const GitHubAPI = {
     },
 
     /**
-     * 上传图片（支持进度回调，防重复上传）
-     * @param {string} path - 图片路径
-     * @param {File} file - 图片文件
-     * @param {Function} onProgress - 进度回调 (loaded, total)
-     * @returns {Promise<string|null>} - 图片 URL 或 null
+     * 轮询检查文件是否在 GitHub 上出现
+     */
+    async waitForFile(path, maxWaitMs = 30000) {
+        const start = Date.now();
+        while (Date.now() - start < maxWaitMs) {
+            const url = await this.getFileUrlIfExists(path);
+            if (url) return url;
+            await new Promise(r => setTimeout(r, 2000));
+        }
+        return null;
+    },
+
+    /**
+     * 上传图片（防重复、防假失败）
      */
     async uploadImage(path, file, onProgress) {
         const existingUrl = await this.getFileUrlIfExists(path);
         if (existingUrl) {
-            console.log('文件已存在，跳过上传:', path);
             if (onProgress) onProgress(1, 1);
             return existingUrl;
         }
@@ -183,83 +191,44 @@ const GitHubAPI = {
         });
 
         const body = {
-            message: `上传图片: ${path}`,
+            message: path,
             content: base64,
             branch: this.branch
         };
-
         const bodyStr = JSON.stringify(body);
-        const actualBodySize = new Blob([bodyStr]).size;
+        const bodySize = new Blob([bodyStr]).size;
 
-        return new Promise((resolve, reject) => {
+        const attemptUpload = () => new Promise((resolve) => {
             const xhr = new XMLHttpRequest();
             xhr.open('PUT', `https://api.github.com/repos/${this.owner}/${this.repo}/contents/${path}`);
             xhr.timeout = 600000;
-
             const headers = this.getHeaders();
-            for (const [key, value] of Object.entries(headers)) {
-                xhr.setRequestHeader(key, value);
-            }
-
-            let uploadDone = false;
-            let responseReceived = false;
+            for (const [k, v] of Object.entries(headers)) xhr.setRequestHeader(k, v);
 
             xhr.upload.onprogress = (e) => {
                 if (onProgress && e.lengthComputable) {
-                    onProgress(e.loaded, actualBodySize);
-                    if (e.loaded >= e.total) {
-                        uploadDone = true;
-                    }
+                    onProgress(e.loaded, bodySize);
                 }
             };
 
             xhr.onload = () => {
-                responseReceived = true;
                 if (xhr.status >= 200 && xhr.status < 300) {
-                    try {
-                        const data = JSON.parse(xhr.responseText);
-                        resolve(data.content.download_url);
-                    } catch (e) {
-                        this.getFileUrlIfExists(path).then(url => {
-                            resolve(url);
-                        }).catch(() => reject(new Error('响应解析失败')));
-                    }
-                } else if (xhr.status === 409) {
-                    this.getFileUrlIfExists(path).then(url => {
-                        resolve(url);
-                    }).catch(() => resolve(null));
+                    const data = JSON.parse(xhr.responseText);
+                    resolve({ ok: true, url: data.content.download_url });
                 } else {
-                    reject(new Error(`上传失败: ${xhr.status}`));
+                    resolve({ ok: false });
                 }
             };
-
-            xhr.onerror = () => {
-                if (uploadDone && !responseReceived) {
-                    setTimeout(async () => {
-                        const url = await this.getFileUrlIfExists(path);
-                        if (url) {
-                            resolve(url);
-                        } else {
-                            reject(new Error('网络错误'));
-                        }
-                    }, 3000);
-                } else {
-                    reject(new Error('网络错误'));
-                }
-            };
-
-            xhr.ontimeout = () => {
-                if (uploadDone) {
-                    this.getFileUrlIfExists(path).then(url => {
-                        resolve(url);
-                    }).catch(() => reject(new Error('上传超时')));
-                } else {
-                    reject(new Error('上传超时'));
-                }
-            };
-
+            xhr.onerror = () => resolve({ ok: false });
+            xhr.ontimeout = () => resolve({ ok: false });
             xhr.send(bodyStr);
         });
+
+        const result = await attemptUpload();
+        if (result.ok) return result.url;
+
+        const confirmed = await this.waitForFile(path, 30000);
+        return confirmed;
     },
 
     /**
