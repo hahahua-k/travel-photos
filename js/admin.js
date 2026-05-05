@@ -269,6 +269,9 @@ const Admin = {
                 const percent = Math.min(Math.floor(fraction * 95), 95);
                 this.updateProgress(percent);
                 this.updateLoadingDetail(`${this.formatSize(loaded)} / ${this.formatSize(total)}`);
+            }, (status) => {
+                if (status === 'waiting') this.updateLoadingDetail('等待服务器确认...');
+                if (status === 'timeout') this.updateLoadingDetail('确认超时');
             });
 
             let thumbUrl = null;
@@ -279,6 +282,9 @@ const Admin = {
                     const percent = Math.min(95 + Math.floor(fraction * 5), 100);
                     this.updateProgress(percent);
                     this.updateLoadingDetail(`${this.formatSize(loaded)} / ${this.formatSize(total)}`);
+                }, (status) => {
+                    if (status === 'waiting') this.updateLoadingDetail('等待服务器确认...');
+                    if (status === 'timeout') this.updateLoadingDetail('确认超时');
                 });
             } else {
                 this.updateProgress(100);

@@ -161,22 +161,27 @@ const GitHubAPI = {
     },
 
     /**
-     * 轮询检查文件是否在 GitHub 上出现
+     * 轮询检查文件是否在 GitHub 上出现，同时回调进度通知
      */
-    async waitForFile(path, maxWaitMs = 30000) {
+    async waitForFile(path, maxWaitMs = 30000, onPoll) {
         const start = Date.now();
         while (Date.now() - start < maxWaitMs) {
             const url = await this.getFileUrlIfExists(path);
-            if (url) return url;
+            if (url) {
+                if (onPoll) onPoll('ok', url);
+                return url;
+            }
+            if (onPoll) onPoll('waiting', Math.floor((Date.now() - start) / 1000));
             await new Promise(r => setTimeout(r, 2000));
         }
+        if (onPoll) onPoll('timeout');
         return null;
     },
 
     /**
      * 上传图片（防重复、防假失败）
      */
-    async uploadImage(path, file, onProgress) {
+    async uploadImage(path, file, onProgress, onStatus) {
         const existingUrl = await this.getFileUrlIfExists(path);
         if (existingUrl) {
             if (onProgress) onProgress(1, 1);
@@ -227,7 +232,10 @@ const GitHubAPI = {
         const result = await attemptUpload();
         if (result.ok) return result.url;
 
-        const confirmed = await this.waitForFile(path, 30000);
+        if (onStatus) onStatus('waiting');
+        const confirmed = await this.waitForFile(path, 30000, (state, data) => {
+            if (onStatus) onStatus(state);
+        });
         return confirmed;
     },
 
