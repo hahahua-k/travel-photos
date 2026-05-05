@@ -130,8 +130,59 @@
     {
       "id": "region-1777952835433",
       "name": "街巷",
-      "cover": null,
-      "images": [],
+      "cover": "https://raw.githubusercontent.com/hahahua-k/travel-photos/main/images/region-1777952835433/1777953781212-thumb-7d5702e41e74fbc090a6884d01a30259.jpg",
+      "images": [
+        {
+          "url": "https://raw.githubusercontent.com/hahahua-k/travel-photos/main/images/region-1777952835433/1777953781212-7d5702e41e74fbc090a6884d01a30259.jpg",
+          "thumbnail": "https://raw.githubusercontent.com/hahahua-k/travel-photos/main/images/region-1777952835433/1777953781212-thumb-7d5702e41e74fbc090a6884d01a30259.jpg",
+          "compressed": false
+        },
+        {
+          "url": "https://raw.githubusercontent.com/hahahua-k/travel-photos/main/images/region-1777952835433/1777953790455-05582CF9B94017C7A6966A9215E0A668.jpg",
+          "thumbnail": "https://raw.githubusercontent.com/hahahua-k/travel-photos/main/images/region-1777952835433/1777953790455-thumb-05582CF9B94017C7A6966A9215E0A668.jpg",
+          "compressed": false
+        },
+        {
+          "url": "https://raw.githubusercontent.com/hahahua-k/travel-photos/main/images/region-1777952835433/1777953802459-26531B48448C1DF12EA7A73EB0AFC4A9.jpg",
+          "thumbnail": "https://raw.githubusercontent.com/hahahua-k/travel-photos/main/images/region-1777952835433/1777953802459-thumb-26531B48448C1DF12EA7A73EB0AFC4A9.jpg",
+          "compressed": false
+        },
+        {
+          "url": "https://raw.githubusercontent.com/hahahua-k/travel-photos/main/images/region-1777952835433/1777953811185-2206002E07A97E38993CE5BB7DBB8656.jpg",
+          "thumbnail": "https://raw.githubusercontent.com/hahahua-k/travel-photos/main/images/region-1777952835433/1777953811185-thumb-2206002E07A97E38993CE5BB7DBB8656.jpg",
+          "compressed": false
+        },
+        {
+          "url": "https://raw.githubusercontent.com/hahahua-k/travel-photos/main/images/region-1777952835433/1777953822827-AE34550314BF45F9809463B9497CE3B9.jpg",
+          "thumbnail": "https://raw.githubusercontent.com/hahahua-k/travel-photos/main/images/region-1777952835433/1777953822827-thumb-AE34550314BF45F9809463B9497CE3B9.jpg",
+          "compressed": false
+        },
+        {
+          "url": "https://raw.githubusercontent.com/hahahua-k/travel-photos/main/images/region-1777952835433/1777953840492-AGC9.9_R2_20260501_200533162.jpg",
+          "thumbnail": "https://raw.githubusercontent.com/hahahua-k/travel-photos/main/images/region-1777952835433/1777953840492-thumb-AGC9.9_R2_20260501_200533162.jpg",
+          "compressed": true
+        },
+        {
+          "url": "https://raw.githubusercontent.com/hahahua-k/travel-photos/main/images/region-1777952835433/1777953854673-AGC9.9_R2_20260502_093253443.jpg",
+          "thumbnail": "https://raw.githubusercontent.com/hahahua-k/travel-photos/main/images/region-1777952835433/1777953854673-thumb-AGC9.9_R2_20260502_093253443.jpg",
+          "compressed": true
+        },
+        {
+          "url": "https://raw.githubusercontent.com/hahahua-k/travel-photos/main/images/region-1777952835433/1777953861042-B4E1FE70132F19FCED812DB84EF5C2D8.jpg",
+          "thumbnail": "https://raw.githubusercontent.com/hahahua-k/travel-photos/main/images/region-1777952835433/1777953861042-thumb-B4E1FE70132F19FCED812DB84EF5C2D8.jpg",
+          "compressed": false
+        },
+        {
+          "url": "https://raw.githubusercontent.com/hahahua-k/travel-photos/main/images/region-1777952835433/1777953872784-D46B833FCF806077C96AB428369FF3B9.jpg",
+          "thumbnail": "https://raw.githubusercontent.com/hahahua-k/travel-photos/main/images/region-1777952835433/1777953872784-thumb-D46B833FCF806077C96AB428369FF3B9.jpg",
+          "compressed": false
+        },
+        {
+          "url": "https://raw.githubusercontent.com/hahahua-k/travel-photos/main/images/region-1777952835433/1777953884643-DDB75028A9F8A05C9F0C28B51D562C2C.jpg",
+          "thumbnail": "https://raw.githubusercontent.com/hahahua-k/travel-photos/main/images/region-1777952835433/1777953884643-thumb-DDB75028A9F8A05C9F0C28B51D562C2C.jpg",
+          "compressed": false
+        }
+      ],
       "protected": false
     }
   ]
