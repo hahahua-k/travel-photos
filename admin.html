@@ -14,76 +14,95 @@
         }
         
         .admin-header {
-            background: linear-gradient(135deg, #2c3e50, #34495e);
+            background: rgba(255,255,255,0.03);
+            backdrop-filter: blur(20px);
             color: white;
-            padding: 30px;
-            border-radius: var(--radius);
-            margin-bottom: 30px;
+            padding: 32px;
+            border-radius: 20px;
+            margin-bottom: 28px;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            border: 1px solid rgba(255,255,255,0.06);
         }
         
         .admin-header h1 {
-            font-size: 1.8rem;
+            font-size: 1.6rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #fff, #a8c0ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
         
         .back-link {
-            color: white;
+            color: rgba(255,255,255,0.4);
             text-decoration: none;
-            opacity: 0.9;
             transition: var(--transition);
+            font-size: 0.85rem;
         }
         
         .back-link:hover {
-            opacity: 1;
+            color: rgba(255,255,255,0.8);
         }
         
         .section {
-            background: white;
-            border-radius: var(--radius);
-            box-shadow: var(--shadow);
-            padding: 25px;
-            margin-bottom: 25px;
+            background: rgba(255,255,255,0.03);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 28px;
+            margin-bottom: 24px;
+            border: 1px solid rgba(255,255,255,0.06);
         }
         
         .section h2 {
-            color: var(--primary-color);
+            color: rgba(255,255,255,0.8);
             margin-bottom: 20px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid #eee;
+            padding-bottom: 12px;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            font-size: 1.1rem;
+            font-weight: 600;
         }
         
         .form-group {
-            margin-bottom: 15px;
+            margin-bottom: 16px;
         }
         
         .form-group label {
             display: block;
-            margin-bottom: 5px;
+            margin-bottom: 6px;
             font-weight: 500;
-            color: var(--text-color);
+            color: rgba(255,255,255,0.5);
+            font-size: 0.85rem;
         }
         
         .form-group input,
         .form-group textarea {
             width: 100%;
-            padding: 10px;
-            border: 2px solid #ddd;
-            border-radius: 8px;
-            font-size: 1rem;
+            padding: 12px 14px;
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 12px;
+            font-size: 0.95rem;
             transition: var(--transition);
+            background: rgba(255,255,255,0.03);
+            color: white;
+        }
+
+        .form-group input::placeholder {
+            color: rgba(255,255,255,0.2);
         }
         
         .form-group input:focus,
         .form-group textarea:focus {
             outline: none;
-            border-color: var(--secondary-color);
+            border-color: rgba(67, 97, 238, 0.4);
+            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.1);
+            background: rgba(255,255,255,0.05);
         }
         
         .form-row {
             display: flex;
-            gap: 15px;
+            gap: 16px;
         }
         
         .form-row .form-group {
@@ -105,61 +124,69 @@
         .btn {
             padding: 10px 20px;
             border: none;
-            border-radius: 8px;
-            font-size: 1rem;
+            border-radius: 12px;
+            font-size: 0.9rem;
+            font-weight: 600;
             cursor: pointer;
             transition: var(--transition);
         }
         
         .btn-primary {
-            background: var(--secondary-color);
+            background: linear-gradient(135deg, #4361ee, #7209b7);
             color: white;
+            box-shadow: 0 4px 15px rgba(67, 97, 238, 0.25);
         }
         
         .btn-primary:hover {
-            background: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(67, 97, 238, 0.35);
         }
         
         .btn-danger {
-            background: var(--accent-color);
-            color: white;
+            background: rgba(231, 76, 60, 0.15);
+            color: #ff6b6b;
+            border: 1px solid rgba(231, 76, 60, 0.2);
         }
         
         .btn-danger:hover {
-            background: #c0392b;
+            background: rgba(231, 76, 60, 0.25);
         }
         
         .btn-success {
-            background: #27ae60;
-            color: white;
+            background: rgba(6, 214, 160, 0.15);
+            color: #06d6a0;
+            border: 1px solid rgba(6, 214, 160, 0.2);
         }
         
         .btn-success:hover {
-            background: #229954;
+            background: rgba(6, 214, 160, 0.25);
         }
         
         .btn-sm {
-            padding: 6px 12px;
-            font-size: 0.9rem;
+            padding: 6px 14px;
+            font-size: 0.82rem;
         }
         
         .region-list {
             list-style: none;
+            margin-top: 16px;
         }
         
         .region-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 15px;
-            border: 1px solid #eee;
-            border-radius: 8px;
+            padding: 16px 18px;
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 14px;
             margin-bottom: 10px;
             transition: var(--transition);
+            background: rgba(255,255,255,0.02);
         }
         
         .region-item:hover {
-            background: #f9f9f9;
+            background: rgba(255,255,255,0.05);
+            border-color: rgba(255,255,255,0.1);
         }
         
         .region-info {
@@ -168,13 +195,13 @@
         
         .region-name {
             font-weight: 600;
-            color: var(--primary-color);
-            margin-bottom: 5px;
+            color: rgba(255,255,255,0.9);
+            margin-bottom: 4px;
         }
         
         .region-meta {
-            font-size: 0.85rem;
-            color: var(--text-light);
+            font-size: 0.8rem;
+            color: rgba(255,255,255,0.3);
         }
         
         .region-actions {
@@ -185,15 +212,16 @@
         .image-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-            gap: 15px;
-            margin-top: 15px;
+            gap: 14px;
+            margin-top: 16px;
         }
         
         .image-item {
             position: relative;
-            border-radius: 8px;
+            border-radius: 12px;
             overflow: hidden;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.04);
         }
         
         .image-item img {
@@ -207,24 +235,25 @@
             position: absolute;
             top: 8px;
             left: 8px;
-            background: linear-gradient(135deg, #4361ee, #3a0ca3);
+            background: linear-gradient(135deg, #4361ee, #7209b7);
             color: white;
-            font-size: 0.7rem;
+            font-size: 0.65rem;
             font-weight: 600;
             padding: 3px 8px;
             border-radius: 6px;
             letter-spacing: 0.5px;
-            box-shadow: 0 2px 8px rgba(67, 97, 238, 0.4);
+            box-shadow: 0 2px 10px rgba(67, 97, 238, 0.4);
             z-index: 1;
         }
         
         .image-delete {
             position: absolute;
-            top: 5px;
-            right: 5px;
-            background: rgba(231, 76, 60, 0.9);
+            top: 6px;
+            right: 6px;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
             color: white;
-            border: none;
+            border: 1px solid rgba(255,255,255,0.1);
             border-radius: 50%;
             width: 24px;
             height: 24px;
@@ -232,7 +261,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             opacity: 0;
             transition: var(--transition);
         }
@@ -242,41 +271,43 @@
         }
         
         .message {
-            padding: 10px 15px;
-            border-radius: 8px;
-            margin-bottom: 15px;
+            padding: 12px 16px;
+            border-radius: 12px;
+            margin-bottom: 16px;
             display: none;
+            font-size: 0.9rem;
         }
         
         .message.success {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
+            background: rgba(6, 214, 160, 0.1);
+            color: #06d6a0;
+            border: 1px solid rgba(6, 214, 160, 0.15);
         }
         
         .message.error {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
+            background: rgba(231, 76, 60, 0.1);
+            color: #ff6b6b;
+            border: 1px solid rgba(231, 76, 60, 0.15);
         }
         
         .upload-area {
-            border: 2px dashed #ddd;
-            border-radius: 8px;
-            padding: 30px;
+            border: 2px dashed rgba(255,255,255,0.08);
+            border-radius: 14px;
+            padding: 36px;
             text-align: center;
             cursor: pointer;
             transition: var(--transition);
-            margin-top: 15px;
+            margin-top: 16px;
         }
         
         .upload-area:hover {
-            border-color: var(--secondary-color);
-            background: #f8f9fa;
+            border-color: rgba(67, 97, 238, 0.4);
+            background: rgba(67, 97, 238, 0.05);
         }
         
         .upload-area p {
-            color: var(--text-light);
+            color: rgba(255,255,255,0.3);
+            font-size: 0.9rem;
         }
         
         #file-input {
@@ -290,7 +321,8 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0,0,0,0.5);
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(10px);
             z-index: 1000;
             align-items: center;
             justify-content: center;
@@ -301,12 +333,14 @@
         }
         
         .loading-content {
-            background: white;
-            padding: 30px 40px;
-            border-radius: 16px;
+            background: rgba(30, 30, 50, 0.95);
+            backdrop-filter: blur(20px);
+            padding: 36px 44px;
+            border-radius: 20px;
             text-align: center;
-            min-width: 280px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+            min-width: 300px;
+            box-shadow: 0 30px 80px rgba(0,0,0,0.4);
+            border: 1px solid rgba(255,255,255,0.06);
         }
 
         .progress-bar-wrapper {
@@ -315,9 +349,9 @@
 
         .progress-bar-track {
             width: 100%;
-            height: 8px;
-            background: #e5e7eb;
-            border-radius: 4px;
+            height: 6px;
+            background: rgba(255,255,255,0.06);
+            border-radius: 3px;
             overflow: hidden;
         }
 
@@ -325,16 +359,27 @@
             height: 100%;
             width: 0%;
             background: linear-gradient(90deg, #4361ee, #7209b7);
-            border-radius: 4px;
+            border-radius: 3px;
             transition: width 0.3s ease;
+            box-shadow: 0 0 10px rgba(67, 97, 238, 0.3);
         }
 
         .progress-bar-text {
-            margin-top: 8px;
-            font-size: 0.82rem;
-            color: #6b7280;
+            margin-top: 10px;
+            font-size: 0.8rem;
+            color: rgba(255,255,255,0.35);
             font-weight: 500;
             letter-spacing: 1px;
+        }
+
+        #loading-status {
+            color: rgba(255,255,255,0.9);
+            font-weight: 600;
+        }
+
+        #loading-detail {
+            color: rgba(255,255,255,0.35);
+            font-size: 0.82rem;
         }
     </style>
 </head>
