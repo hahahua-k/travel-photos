@@ -188,8 +188,19 @@
     {
       "id": "region-1778113707705",
       "name": "五龙湖",
-      "cover": null,
-      "images": [],
+      "cover": "https://raw.githubusercontent.com/hahahua-k/travel-photos/main/images/region-1778113707705/1778114956920-thumb-AGC9.9_R2_20260502_082932267.jpg",
+      "images": [
+        {
+          "url": "https://raw.githubusercontent.com/hahahua-k/travel-photos/main/images/region-1778113707705/1778114956920-AGC9.9_R2_20260502_082932267.jpg",
+          "thumbnail": "https://raw.githubusercontent.com/hahahua-k/travel-photos/main/images/region-1778113707705/1778114956920-thumb-AGC9.9_R2_20260502_082932267.jpg",
+          "compressed": true
+        },
+        {
+          "url": "https://raw.githubusercontent.com/hahahua-k/travel-photos/main/images/region-1778113707705/1778114988034-CC7C30337F2A0A39A506B9BDEA74322C.jpg",
+          "thumbnail": "https://raw.githubusercontent.com/hahahua-k/travel-photos/main/images/region-1778113707705/1778114988034-thumb-CC7C30337F2A0A39A506B9BDEA74322C.jpg",
+          "compressed": false
+        }
+      ],
       "protected": false
     },
     {
