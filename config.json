@@ -744,8 +744,14 @@
         {
           "id": "album-1778166022348",
           "name": "小麦岛",
-          "cover": null,
-          "images": []
+          "cover": "https://raw.githubusercontent.com/hahahua-k/travel-photos/main/images/album-1778166022348/1778196377554-thumb-CRnall_20251001_133427397%20(1).jpg",
+          "images": [
+            {
+              "url": "https://raw.githubusercontent.com/hahahua-k/travel-photos/main/images/album-1778166022348/1778196377554-CRnall_20251001_133427397%20(1).jpg",
+              "thumbnail": "https://raw.githubusercontent.com/hahahua-k/travel-photos/main/images/album-1778166022348/1778196377554-thumb-CRnall_20251001_133427397%20(1).jpg",
+              "compressed": false
+            }
+          ]
         },
         {
           "id": "album-1778166098873",
