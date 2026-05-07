@@ -98,110 +98,189 @@ const App = {
     },
 
     renderSections() {
-        const track = document.getElementById('albums-track');
-        if (!track) return;
-        track.innerHTML = '';
+        const area = document.getElementById('sections-area');
+        if (!area) return;
+        area.innerHTML = '';
 
         if (!this.config || !this.config.sections || this.config.sections.length === 0) {
-            track.innerHTML = '<p class="empty-hint">暂无板块，请在管理页面添加</p>';
+            area.innerHTML = '<p class="empty-hint">暂无板块，请在管理页面添加</p>';
             return;
         }
 
         this.config.sections.forEach((section, index) => {
-            const albumCount = section.albums ? section.albums.length : 0;
+            const block = document.createElement('div');
+            block.className = 'section-block';
+            block.dataset.sectionId = section.id;
 
-            const card = document.createElement('div');
-            card.className = 'album-card';
-            card.dataset.sectionId = section.id;
-
-            let albumsHtml = '';
-            if (section.albums && section.albums.length > 0) {
-                section.albums.forEach((album, aIndex) => {
-                    let coverUrl = album.cover || `https://picsum.photos/100/100?random=${aIndex}`;
-                    if (coverUrl.includes('raw.githubusercontent.com')) {
-                        coverUrl = `https://wsrv.nl/?url=${encodeURIComponent(coverUrl)}&w=150&q=50&output=webp`;
-                    }
-                    const imgCount = album.images ? album.images.length : 0;
-                    albumsHtml += `
-                        <div class="album-card-album" data-album-id="${album.id}" data-section-id="${section.id}">
-                            <div class="album-card-album-cover">
-                                <img src="${coverUrl}" alt="${album.name}" loading="lazy"
-                                     onerror="this.src='https://picsum.photos/100/100?random=${aIndex}'">
-                            </div>
-                            <div class="album-card-album-info">
-                                <div class="album-card-album-name">${album.name}</div>
-                                <div class="album-card-album-count">${imgCount} 张照片</div>
-                            </div>
-                            <div class="album-card-album-arrow">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/><polyline points="12 5 19 12 12 19"/></svg>
-                            </div>
-                        </div>
-                    `;
-                });
-            } else {
-                albumsHtml = '<p style="text-align: center; color: rgba(255,255,255,0.2); font-size: 0.85rem; padding: 20px 0;">暂无相册</p>';
-            }
-
-            card.innerHTML = `
-                <div class="album-card-header">
-                    <span class="album-card-tag">板块 ${String(index + 1).padStart(2, '0')}</span>
-                    <h3 class="album-card-title">${section.name}</h3>
-                </div>
-                <div class="album-card-albums">
-                    ${albumsHtml}
-                </div>
+            // 标题栏
+            const header = document.createElement('div');
+            header.className = 'section-header';
+            header.innerHTML = `
+                <span class="section-header-tag">板块 ${String(index + 1).padStart(2, '0')}</span>
+                <h2 class="section-header-title">${section.name}</h2>
+                <div class="section-header-line"></div>
             `;
 
-            // 相册点击进入画廊
-            card.querySelectorAll('.album-card-album').forEach(el => {
-                el.addEventListener('click', () => {
-                    const sectionId = el.dataset.sectionId;
-                    const albumId = el.dataset.albumId;
-                    window.location.href = `gallery.html?section=${sectionId}&album=${albumId}`;
-                });
-            });
+            // 相册轨道
+            const track = document.createElement('div');
+            track.className = 'section-albums-track';
 
-            track.appendChild(card);
+            if (section.albums && section.albums.length > 0) {
+                section.albums.forEach((album, aIndex) => {
+                    let coverUrl = album.cover || `https://picsum.photos/400/300?random=${aIndex}`;
+                    if (coverUrl.includes('raw.githubusercontent.com')) {
+                        coverUrl = `https://wsrv.nl/?url=${encodeURIComponent(coverUrl)}&w=500&q=60&output=webp`;
+                    }
+                    const imgCount = album.images ? album.images.length : 0;
+
+                    const albumEl = document.createElement('div');
+                    albumEl.className = 'album-item';
+                    albumEl.innerHTML = `
+                        <div class="album-item-cover">
+                            <img src="${coverUrl}" alt="${album.name}" loading="lazy"
+                                 onerror="this.src='https://picsum.photos/400/300?random=${aIndex}'">
+                        </div>
+                        <div class="album-item-info">
+                            <div class="album-item-name">${album.name}</div>
+                            <div class="album-item-count">${imgCount} 张照片</div>
+                        </div>
+                    `;
+
+                    albumEl.addEventListener('click', () => {
+                        window.location.href = `gallery.html?section=${section.id}&album=${album.id}`;
+                    });
+
+                    track.appendChild(albumEl);
+                });
+            } else {
+                track.innerHTML = '<p style="color: rgba(255,255,255,0.2); font-size: 0.85rem; padding: 20px 0;">暂无相册</p>';
+            }
+
+            // 拖拽滚动
+            this.initDragScroll(track);
+
+            block.appendChild(header);
+            block.appendChild(track);
+            area.appendChild(block);
         });
 
-        // 初始化视差滚动
-        this.initParallax();
-
-        if (this.config.sections.length > 0) {
-            this.focusSection(this.config.sections[0].id, false);
-        }
+        // 滚动动画观察
+        this.setupScrollAnimations();
     },
 
-    initParallax() {
-        const track = document.getElementById('albums-track');
-        if (!track) return;
+    initDragScroll(track) {
+        let isDown = false;
+        let startX;
+        let scrollLeft;
+        let velocity = 0;
+        let lastX = 0;
+        let lastTime = 0;
+        let rafId = null;
 
-        let lastScrollLeft = 0;
-        let ticking = false;
-
-        const updateParallax = () => {
-            const cards = track.querySelectorAll('.album-card');
-            const scrollLeft = track.scrollLeft;
-
-            cards.forEach(card => {
-                const albums = card.querySelectorAll('.album-card-album');
-                albums.forEach((album, index) => {
-                    // 越靠下的相册，位移越小（视差效果）
-                    const parallaxFactor = 1 - (index * 0.08);
-                    const offset = scrollLeft * (1 - parallaxFactor) * 0.15;
-                    album.style.transform = `translateX(${-offset}px)`;
-                });
-            });
-
-            ticking = false;
+        const onMouseDown = (e) => {
+            isDown = true;
+            track.style.cursor = 'grabbing';
+            startX = e.pageX - track.offsetLeft;
+            scrollLeft = track.scrollLeft;
+            lastX = e.pageX;
+            lastTime = Date.now();
+            velocity = 0;
+            if (rafId) cancelAnimationFrame(rafId);
         };
 
-        track.addEventListener('scroll', () => {
-            if (!ticking) {
-                requestAnimationFrame(updateParallax);
-                ticking = true;
+        const onMouseMove = (e) => {
+            if (!isDown) return;
+            e.preventDefault();
+            const x = e.pageX - track.offsetLeft;
+            const walk = (x - startX) * 1.5;
+            track.scrollLeft = scrollLeft - walk;
+
+            const now = Date.now();
+            const dt = now - lastTime;
+            if (dt > 0) {
+                velocity = (e.pageX - lastX) / dt;
             }
+            lastX = e.pageX;
+            lastTime = now;
+        };
+
+        const onMouseUp = () => {
+            isDown = false;
+            track.style.cursor = 'grab';
+
+            // 惯性滚动
+            let currentVelocity = velocity * 150;
+            const decelerate = () => {
+                if (Math.abs(currentVelocity) < 0.5) return;
+                track.scrollLeft -= currentVelocity;
+                currentVelocity *= 0.95; // 摩擦系数
+                rafId = requestAnimationFrame(decelerate);
+            };
+            decelerate();
+        };
+
+        track.addEventListener('mousedown', onMouseDown);
+        window.addEventListener('mousemove', onMouseMove);
+        window.addEventListener('mouseup', onMouseUp);
+
+        // 触摸支持
+        let touchStartX = 0;
+        let touchScrollLeft = 0;
+        let touchLastX = 0;
+        let touchLastTime = 0;
+
+        track.addEventListener('touchstart', (e) => {
+            touchStartX = e.touches[0].pageX;
+            touchScrollLeft = track.scrollLeft;
+            touchLastX = touchStartX;
+            touchLastTime = Date.now();
+            velocity = 0;
+            if (rafId) cancelAnimationFrame(rafId);
         }, { passive: true });
+
+        track.addEventListener('touchmove', (e) => {
+            const x = e.touches[0].pageX;
+            const walk = (touchStartX - x) * 1.2;
+            track.scrollLeft = touchScrollLeft + walk;
+
+            const now = Date.now();
+            const dt = now - touchLastTime;
+            if (dt > 0) {
+                velocity = (x - touchLastX) / dt;
+            }
+            touchLastX = x;
+            touchLastTime = now;
+        }, { passive: true });
+
+        track.addEventListener('touchend', () => {
+            let currentVelocity = velocity * 150;
+            const decelerate = () => {
+                if (Math.abs(currentVelocity) < 0.5) return;
+                track.scrollLeft -= currentVelocity;
+                currentVelocity *= 0.95;
+                rafId = requestAnimationFrame(decelerate);
+            };
+            decelerate();
+        });
+    },
+
+    setupScrollAnimations() {
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                } else {
+                    entry.target.classList.remove('visible');
+                }
+            });
+        }, {
+            threshold: 0.1,
+            rootMargin: '0px 0px -40px 0px'
+        });
+
+        document.querySelectorAll('.section-block').forEach(el => {
+            observer.observe(el);
+        });
     },
 
     focusSection(sectionId, scroll = true) {

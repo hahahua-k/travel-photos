@@ -36,15 +36,11 @@
                     <div class="map-markers" id="map-markers"></div>
                 </div>
             </div>
-            <div class="map-hint">拖拽地图旋转 · 点击标记查看相册</div>
+            <div class="map-hint">拖拽地图旋转 · 点击标记查看板块</div>
         </section>
 
-        <section class="albums-section">
-            <div class="albums-track-wrapper">
-                <div class="albums-track" id="albums-track">
-                    <div class="loading-spinner" id="loading"></div>
-                </div>
-            </div>
+        <section class="sections-area" id="sections-area">
+            <div class="loading-spinner" id="loading"></div>
         </section>
 
         <footer>
@@ -58,17 +54,6 @@
             <input type="password" id="password-input" placeholder="请输入访问密码" autocomplete="off">
             <button class="btn" id="password-submit">确认访问</button>
             <p class="error" id="password-error">密码错误，请重试</p>
-        </div>
-    </div>
-
-    <div class="section-modal" id="section-modal">
-        <div class="section-modal-overlay"></div>
-        <div class="section-modal-container">
-            <button class="section-modal-close" id="section-modal-close">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-            </button>
-            <h2 class="section-modal-title" id="section-modal-title"></h2>
-            <div class="section-modal-grid" id="section-modal-content"></div>
         </div>
     </div>
 
