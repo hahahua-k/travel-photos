@@ -361,47 +361,62 @@ const Admin = {
         this.showLoading();
 
         let uploadedCount = 0;
+        let failedCount = 0;
         const totalFiles = files.length;
+        const fileArray = Array.from(files);
 
-        for (const file of files) {
-            if (file.size > 50 * 1024 * 1024) continue;
+        for (let i = 0; i < fileArray.length; i++) {
+            const file = fileArray[i];
+            
+            if (file.size > 50 * 1024 * 1024) {
+                failedCount++;
+                continue;
+            }
 
-            let uploadFile = file;
-            let wasCompressed = false;
+            try {
+                let uploadFile = file;
+                let wasCompressed = false;
 
-            if (file.size > 30 * 1024 * 1024 && file.type.startsWith('image/')) {
-                try {
-                    this.updateLoading(`正在压缩 (${uploadedCount + 1}/${totalFiles})`, file.name);
+                if (file.size > 30 * 1024 * 1024 && file.type.startsWith('image/')) {
+                    this.updateLoading(`正在压缩 (${i + 1}/${totalFiles})`, file.name);
                     uploadFile = await ImageCompressor.compress(file, 30, 0.85);
                     wasCompressed = true;
-                } catch (e) {}
-            }
+                }
 
-            let thumbFile = null;
-            try {
-                this.updateLoading(`生成缩略图 (${uploadedCount + 1}/${totalFiles})`, file.name);
-                thumbFile = await ImageCompressor.generateThumbnail(file, 800, 0.6);
-            } catch (e) {}
+                let thumbFile = null;
+                try {
+                    this.updateLoading(`生成缩略图 (${i + 1}/${totalFiles})`, file.name);
+                    thumbFile = await ImageCompressor.generateThumbnail(file, 800, 0.6);
+                } catch (e) {
+                    console.warn('缩略图生成失败:', e);
+                }
 
-            const timestamp = Date.now();
-            const mainPath = `images/${album.id}/${timestamp}-${file.name}`;
-            const thumbPath = `images/${album.id}/${timestamp}-thumb-${file.name.replace(/\.[^.]+$/, '.jpg')}`;
+                const timestamp = Date.now() + i;
+                const mainPath = `images/${album.id}/${timestamp}-${file.name}`;
+                const thumbPath = `images/${album.id}/${timestamp}-thumb-${file.name.replace(/\.[^.]+$/, '.jpg')}`;
 
-            this.updateLoading(`上传中 (${uploadedCount + 1}/${totalFiles})`, file.name);
-            const url = await GitHubAPI.uploadImage(mainPath, uploadFile, (loaded, total) => {
-                const percent = Math.min(Math.floor((loaded / total) * 95), 95);
-                this.updateProgress(percent);
-                this.updateLoadingDetail(`${this.formatSize(loaded)} / ${this.formatSize(total)}`);
-            }, (status) => {
-                if (status === 'waiting') this.updateLoadingDetail('等待服务器确认...');
-            });
+                this.updateLoading(`上传中 (${i + 1}/${totalFiles})`, file.name);
+                this.updateProgress(0);
 
-            let thumbUrl = null;
-            if (thumbFile) {
-                thumbUrl = await GitHubAPI.uploadImage(thumbPath, thumbFile);
-            }
+                const url = await GitHubAPI.uploadImage(mainPath, uploadFile, (loaded, total) => {
+                    const percent = Math.min(Math.floor((loaded / total) * 95), 95);
+                    this.updateProgress(percent);
+                    this.updateLoadingDetail(`${this.formatSize(loaded)} / ${this.formatSize(total)}`);
+                }, (status) => {
+                    if (status === 'waiting') this.updateLoadingDetail('等待服务器确认...');
+                });
 
-            if (url) {
+                if (!url) {
+                    failedCount++;
+                    console.error('上传失败:', file.name);
+                    continue;
+                }
+
+                let thumbUrl = null;
+                if (thumbFile) {
+                    thumbUrl = await GitHubAPI.uploadImage(thumbPath, thumbFile);
+                }
+
                 if (!album.images) album.images = [];
                 album.images.push({
                     url: url,
@@ -414,14 +429,29 @@ const Admin = {
                 }
                 uploadedCount++;
 
-                this.updateLoading(`保存配置 (${uploadedCount}/${totalFiles})`, file.name);
-                await this.saveConfigToGitHub();
+                this.updateLoading(`保存配置 (${i + 1}/${totalFiles})`, file.name);
+                try {
+                    await this.saveConfigToGitHub();
+                } catch (e) {
+                    console.warn('保存配置失败，继续上传:', e);
+                }
+
+            } catch (error) {
+                failedCount++;
+                console.error('处理文件失败:', file.name, error);
             }
         }
 
         this.renderAlbums();
         this.hideLoading();
-        this.showMessage(`${uploadedCount} 张图片上传成功`, 'success');
+
+        if (uploadedCount > 0) {
+            let msg = `${uploadedCount} 张图片上传成功`;
+            if (failedCount > 0) msg += `，${failedCount} 张失败`;
+            this.showMessage(msg, failedCount > 0 ? 'error' : 'success');
+        } else {
+            this.showMessage('图片上传失败', 'error');
+        }
     },
 
     async saveConfigToGitHub() {
