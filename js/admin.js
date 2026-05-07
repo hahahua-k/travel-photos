@@ -328,44 +328,21 @@ const Admin = {
             this.showMessage('请先选择一个板块', 'error');
             return;
         }
+        const section = this.config.sections.find(s => s.id === this.currentSectionId);
+        if (!section || !section.albums || section.albums.length === 0) {
+            this.showMessage('请先创建相册', 'error');
+            return;
+        }
+        // 直接上传到第一个相册
+        this.pendingAlbum = section.albums[0];
+        document.getElementById('album-file-input').click();
+    },
 
+    triggerUpload(albumId) {
         const section = this.config.sections.find(s => s.id === this.currentSectionId);
         if (!section) return;
-
-        // 让用户选择相册
-        let albumId = '';
-        if (section.albums && section.albums.length > 0) {
-            const albumNames = section.albums.map((a, i) => `${i + 1}. ${a.name}`).join('\n');
-            const choice = prompt(`选择相册（输入序号）或留空创建新相册：\n${albumNames}`);
-            if (choice && !isNaN(choice)) {
-                const index = parseInt(choice) - 1;
-                if (index >= 0 && index < section.albums.length) {
-                    albumId = section.albums[index].id;
-                }
-            }
-        }
-
-        let album;
-        if (albumId) {
-            album = section.albums.find(a => a.id === albumId);
-        }
-
-        if (!album) {
-            const albumName = prompt('请输入新相册名称:', '新相册');
-            if (!albumName) return;
-            album = {
-                id: 'album-' + Date.now(),
-                name: albumName,
-                cover: null,
-                images: []
-            };
-            if (!section.albums) section.albums = [];
-            section.albums.push(album);
-            await this.saveConfigToGitHub();
-            this.renderAlbums();
-        }
-
-        // 触发文件选择
+        const album = section.albums.find(a => a.id === albumId);
+        if (!album) return;
         this.pendingAlbum = album;
         document.getElementById('album-file-input').click();
     },
@@ -376,7 +353,6 @@ const Admin = {
             this.showMessage('请先选择相册', 'error');
             return;
         }
-
         await this.handleFileUpload(files, this.pendingAlbum);
         this.pendingAlbum = null;
     },
