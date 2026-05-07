@@ -230,7 +230,8 @@ const Admin = {
                     <div class="album-item-name">${album.name}</div>
                     <div class="album-item-count">${imgCount} 张</div>
                     <div class="album-item-buttons">
-                        <button class="btn btn-primary btn-sm" onclick="Admin.triggerUpload('${album.id}')">上传图片</button>
+                        <button class="btn btn-primary btn-sm" onclick="Admin.triggerUpload('${album.id}')">上传</button>
+                        <button class="btn btn-success btn-sm" onclick="Admin.viewAlbumImages('${album.id}')">查看</button>
                         <button class="btn btn-sm" style="background:rgba(255,255,255,0.1);color:rgba(255,255,255,0.7)" onclick="Admin.editAlbum('${album.id}')">编辑</button>
                         <button class="btn btn-danger btn-sm" onclick="Admin.deleteAlbum('${album.id}')">删除</button>
                     </div>
@@ -244,9 +245,78 @@ const Admin = {
         if (!section) return;
         const album = section.albums.find(a => a.id === albumId);
         if (!album) return;
-
         this.pendingAlbum = album;
         document.getElementById('album-file-input').click();
+    },
+
+    viewAlbumImages(albumId) {
+        const section = this.config.sections.find(s => s.id === this.currentSectionId);
+        if (!section) return;
+        const album = section.albums.find(a => a.id === albumId);
+        if (!album) return;
+
+        this.currentAlbumId = albumId;
+        const panel = document.getElementById('image-panel');
+        const title = document.getElementById('image-panel-title');
+        const grid = document.getElementById('image-panel-grid');
+
+        title.textContent = album.name + ' - 图片列表';
+
+        if (!album.images || album.images.length === 0) {
+            grid.innerHTML = '<p style="text-align: center; color: rgba(255,255,255,0.25); padding: 40px;">暂无图片</p>';
+        } else {
+            grid.innerHTML = album.images.map((img, index) => {
+                let thumbUrl = img.thumbnail || img.url;
+                if (thumbUrl.includes('raw.githubusercontent.com')) {
+                    thumbUrl = `https://wsrv.nl/?url=${encodeURIComponent(thumbUrl)}&w=200&q=50&output=webp`;
+                }
+                return `
+                    <div class="image-panel-item">
+                        <img src="${thumbUrl}" alt="图片 ${index + 1}" onerror="this.src='https://picsum.photos/200/150?random=${index}'">
+                        <div class="image-panel-item-info">
+                            <span class="image-panel-item-index">#${index + 1}</span>
+                            ${img.compressed ? '<span class="image-badge">已压缩</span>' : ''}
+                            <button class="btn btn-danger btn-sm" onclick="Admin.deleteImage(${index})">删除</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        panel.style.display = 'block';
+    },
+
+    hideImagePanel() {
+        document.getElementById('image-panel').style.display = 'none';
+        this.currentAlbumId = null;
+    },
+
+    async deleteImage(index) {
+        if (!confirm('确定要删除这张图片吗？')) return;
+
+        const section = this.config.sections.find(s => s.id === this.currentSectionId);
+        if (!section) return;
+        const album = section.albums.find(a => a.id === this.currentAlbumId);
+        if (!album || !album.images) return;
+
+        album.images.splice(index, 1);
+
+        if (album.cover && !album.images.some(img => {
+            const url = typeof img === 'string' ? img : img.url;
+            return url === album.cover;
+        })) {
+            album.cover = album.images[0] ? (typeof album.images[0] === 'string' ? album.images[0] : album.images[0].thumbnail || album.images[0].url) : null;
+        }
+
+        const success = await this.saveConfigToGitHub();
+        if (success) {
+            this.viewAlbumImages(this.currentAlbumId);
+            this.renderAlbums();
+            this.showMessage('图片已删除', 'success');
+        } else {
+            album.images.splice(index, 0, deletedImage);
+            this.showMessage('删除失败', 'error');
+        }
     },
 
     showAddAlbumForm() {
