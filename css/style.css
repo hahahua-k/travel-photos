@@ -148,6 +148,26 @@ header {
     overflow: hidden;
 }
 
+.hero-header {
+    background: transparent;
+    color: white;
+    padding: 48px 0 32px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.hero-header::before {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 200px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+}
+
 header::before {
     content: '';
     position: absolute;
@@ -238,6 +258,245 @@ header p {
     letter-spacing: 6px;
     font-weight: 300;
     text-transform: uppercase;
+}
+
+/* ===== Map Section ===== */
+.map-section {
+    padding: 0 0 40px;
+    position: relative;
+}
+
+.map-wrapper {
+    perspective: 1200px;
+    perspective-origin: 50% 40%;
+    max-width: 900px;
+    margin: 0 auto;
+    height: 500px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: grab;
+    user-select: none;
+}
+
+.map-wrapper:active {
+    cursor: grabbing;
+}
+
+.map-scene {
+    position: relative;
+    width: 600px;
+    height: 480px;
+    transform-style: preserve-3d;
+    transform: rotateX(25deg) rotateY(-15deg);
+    transition: transform 0.1s linear;
+}
+
+.china-map {
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+.map-outline {
+    transition: stroke 0.3s ease;
+}
+
+.map-grid {
+    opacity: 0.5;
+}
+
+.map-markers {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+}
+
+.map-marker {
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    transform: translate(-50%, -50%);
+    cursor: pointer;
+    pointer-events: auto;
+    z-index: 2;
+}
+
+.map-marker-dot {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: rgba(67, 97, 238, 0.8);
+    border: 2px solid rgba(255,255,255,0.6);
+    box-shadow: 0 0 12px rgba(67, 97, 238, 0.5);
+    transition: all 0.3s ease;
+}
+
+.map-marker:hover .map-marker-dot {
+    transform: scale(1.4);
+    background: rgba(67, 97, 238, 1);
+    box-shadow: 0 0 20px rgba(67, 97, 238, 0.8);
+}
+
+.map-marker.active .map-marker-dot {
+    background: rgba(255, 107, 107, 0.9);
+    box-shadow: 0 0 20px rgba(255, 107, 107, 0.6);
+    transform: scale(1.3);
+}
+
+.map-marker-pulse {
+    position: absolute;
+    inset: -4px;
+    border-radius: 50%;
+    border: 2px solid rgba(67, 97, 238, 0.4);
+    animation: markerPulse 2s ease-out infinite;
+}
+
+.map-marker.active .map-marker-pulse {
+    border-color: rgba(255, 107, 107, 0.4);
+}
+
+@keyframes markerPulse {
+    0% { transform: scale(1); opacity: 1; }
+    100% { transform: scale(2.5); opacity: 0; }
+}
+
+.map-marker-label {
+    position: absolute;
+    top: -32px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(8px);
+    color: white;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.72rem;
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+    border: 1px solid rgba(255,255,255,0.1);
+}
+
+.map-marker:hover .map-marker-label,
+.map-marker.active .map-marker-label {
+    opacity: 1;
+}
+
+.map-hint {
+    text-align: center;
+    color: rgba(255,255,255,0.2);
+    font-size: 0.78rem;
+    letter-spacing: 2px;
+    margin-top: 16px;
+}
+
+/* ===== Albums Track ===== */
+.albums-section {
+    padding: 20px 0 60px;
+    overflow: hidden;
+}
+
+.albums-track-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.albums-track {
+    display: flex;
+    gap: 24px;
+    padding: 20px 0;
+    overflow-x: auto;
+    scroll-behavior: smooth;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.albums-track::-webkit-scrollbar {
+    display: none;
+}
+
+.album-card {
+    flex: 0 0 320px;
+    background: rgba(255,255,255,0.04);
+    backdrop-filter: blur(20px);
+    border-radius: 20px;
+    overflow: hidden;
+    border: 1px solid rgba(255,255,255,0.06);
+    cursor: pointer;
+    transition: all 0.4s var(--ease-out-expo);
+    opacity: 0.6;
+    transform: scale(0.95);
+}
+
+.album-card.active {
+    opacity: 1;
+    transform: scale(1);
+    border-color: rgba(67, 97, 238, 0.3);
+    box-shadow: 0 8px 40px rgba(67, 97, 238, 0.15);
+}
+
+.album-card:hover {
+    opacity: 1;
+    transform: scale(1.02);
+    border-color: rgba(67, 97, 238, 0.2);
+}
+
+.album-card-cover {
+    height: 200px;
+    overflow: hidden;
+    position: relative;
+}
+
+.album-card-cover img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s ease;
+}
+
+.album-card:hover .album-card-cover img {
+    transform: scale(1.06);
+}
+
+.album-card-cover::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 50%;
+    background: linear-gradient(transparent, rgba(15,14,23,0.6));
+}
+
+.album-card-info {
+    padding: 18px 20px;
+}
+
+.album-card-tag {
+    display: inline-block;
+    font-size: 0.65rem;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: rgba(67, 97, 238, 0.7);
+    margin-bottom: 8px;
+    background: rgba(67, 97, 238, 0.08);
+    padding: 3px 8px;
+    border-radius: 4px;
+}
+
+.album-card-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: rgba(255,255,255,0.95);
+    margin-bottom: 4px;
+}
+
+.album-card-meta {
+    font-size: 0.8rem;
+    color: rgba(255,255,255,0.3);
 }
 
 /* ===== Card Grid ===== */

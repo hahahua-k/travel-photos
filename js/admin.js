@@ -146,16 +146,38 @@ const Admin = {
         if (!region) return;
 
         const newName = prompt('请输入新的相册名称:', region.name);
-        if (!newName || newName === region.name) return;
+        if (!newName) return;
+
+        const currentCoords = (region.mapX && region.mapY) ? `${region.mapX},${region.mapY}` : '';
+        const coordsInput = prompt('设置地图坐标 (X,Y 百分比 0-100，如 60,40):', currentCoords);
+        
+        let mapX = region.mapX || 0;
+        let mapY = region.mapY || 0;
+        
+        if (coordsInput && coordsInput.includes(',')) {
+            const parts = coordsInput.split(',').map(s => parseFloat(s.trim()));
+            if (!isNaN(parts[0]) && !isNaN(parts[1])) {
+                mapX = Math.max(0, Math.min(100, parts[0]));
+                mapY = Math.max(0, Math.min(100, parts[1]));
+            }
+        }
 
         const oldName = region.name;
+        const oldMapX = region.mapX;
+        const oldMapY = region.mapY;
+        
         region.name = newName;
+        region.mapX = mapX;
+        region.mapY = mapY;
+        
         const success = await this.saveConfigToGitHub();
         if (success) {
             this.renderRegions();
-            this.showMessage('相册名称已更新', 'success');
+            this.showMessage('相册信息已更新', 'success');
         } else {
             region.name = oldName;
+            region.mapX = oldMapX;
+            region.mapY = oldMapY;
             this.showMessage('更新失败，请检查网络和 Token 权限', 'error');
         }
     },

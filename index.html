@@ -17,7 +17,7 @@
     </div>
 
     <div class="content-layer">
-        <header class="gradient-animate">
+        <header class="hero-header">
             <div class="header-orbs">
                 <div class="header-orb"></div>
                 <div class="header-orb"></div>
@@ -29,11 +29,38 @@
             </div>
         </header>
 
-        <main class="container">
-            <div class="grid" id="regions-grid">
-                <div class="loading-spinner" id="loading"></div>
+        <section class="map-section">
+            <div class="map-wrapper" id="map-wrapper">
+                <div class="map-scene" id="map-scene">
+                    <svg class="china-map" id="china-map" viewBox="0 0 1000 800" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <linearGradient id="mapGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" style="stop-color:rgba(67,97,238,0.15);stop-opacity:1" />
+                                <stop offset="100%" style="stop-color:rgba(114,9,183,0.1);stop-opacity:1" />
+                            </linearGradient>
+                            <filter id="mapGlow">
+                                <feGaussianBlur stdDeviation="2" result="blur" />
+                                <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                            </filter>
+                        </defs>
+                        <path class="map-outline" d="M530,80 L580,75 L620,90 L660,85 L700,100 L730,95 L750,110 L770,105 L790,120 L810,115 L830,130 L840,150 L850,170 L860,190 L865,220 L870,250 L875,280 L880,310 L875,340 L870,370 L865,400 L860,420 L850,440 L840,460 L830,480 L820,500 L810,520 L800,530 L790,540 L780,550 L770,560 L750,570 L730,580 L710,590 L690,600 L670,610 L650,620 L630,630 L610,640 L590,650 L570,660 L550,670 L530,680 L510,685 L490,680 L470,670 L450,660 L430,650 L410,640 L390,630 L370,620 L350,610 L330,600 L310,585 L290,570 L270,550 L260,530 L250,510 L245,490 L240,470 L235,450 L230,430 L225,410 L220,390 L215,370 L210,350 L205,330 L200,310 L195,290 L190,270 L185,250 L180,230 L175,210 L170,190 L165,170 L160,150 L155,130 L160,110 L170,95 L185,85 L200,80 L220,78 L240,75 L260,72 L280,70 L300,72 L320,75 L340,78 L360,82 L380,85 L400,88 L420,90 L440,88 L460,85 L480,82 L500,80 L530,80 Z"
+                              fill="url(#mapGrad)" stroke="rgba(67,97,238,0.3)" stroke-width="1.5" filter="url(#mapGlow)" />
+                        <path class="map-grid" d="M0,200 L1000,200 M0,400 L1000,400 M0,600 L1000,600 M200,0 L200,800 M400,0 L400,800 M600,0 L600,800 M800,0 L800,800"
+                              stroke="rgba(255,255,255,0.02)" stroke-width="0.5" fill="none" />
+                    </svg>
+                    <div class="map-markers" id="map-markers"></div>
+                </div>
             </div>
-        </main>
+            <div class="map-hint">拖拽地图旋转 · 点击标记查看相册</div>
+        </section>
+
+        <section class="albums-section">
+            <div class="albums-track-wrapper">
+                <div class="albums-track" id="albums-track">
+                    <div class="loading-spinner" id="loading"></div>
+                </div>
+            </div>
+        </section>
 
         <footer>
             <p>&copy; 2024 旅行相册 | 由 GitHub Pages 提供支持</p>
