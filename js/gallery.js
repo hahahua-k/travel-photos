@@ -167,19 +167,36 @@ const Gallery = {
         const newIndex = this.currentImageIndex + direction;
         if (newIndex >= 0 && newIndex < this.region.images.length) {
             this.currentImageIndex = newIndex;
+            const wrapper = document.querySelector('.lightbox-image-wrapper');
             const image = document.getElementById('lightbox-image');
             const fullUrl = this.getFullUrl(this.region.images[newIndex]);
 
             image.style.opacity = '0';
-            image.style.transform = direction > 0 ? 'translateX(30px)' : 'translateX(-30px)';
+            image.style.transform = direction > 0 ? 'translateX(20px)' : 'translateX(-20px)';
 
             setTimeout(() => {
-                image.src = fullUrl;
+                image.src = '';
+                wrapper.classList.add('loading');
                 this.updateLightboxInfo();
-                requestAnimationFrame(() => {
-                    image.style.opacity = '1';
-                    image.style.transform = 'translateX(0)';
-                });
+
+                const tempImg = new Image();
+                tempImg.onload = () => {
+                    wrapper.classList.remove('loading');
+                    image.src = fullUrl;
+                    requestAnimationFrame(() => {
+                        image.style.opacity = '1';
+                        image.style.transform = 'translateX(0)';
+                    });
+                };
+                tempImg.onerror = () => {
+                    wrapper.classList.remove('loading');
+                    image.src = fullUrl;
+                    requestAnimationFrame(() => {
+                        image.style.opacity = '1';
+                        image.style.transform = 'translateX(0)';
+                    });
+                };
+                tempImg.src = fullUrl;
             }, 150);
         }
     },

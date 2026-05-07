@@ -755,6 +755,18 @@ header p {
     display: flex;
     align-items: center;
     justify-content: center;
+    position: relative;
+}
+
+.lightbox-image-wrapper.loading::after {
+    content: '';
+    width: 36px;
+    height: 36px;
+    border: 3px solid rgba(255,255,255,0.1);
+    border-top: 3px solid rgba(255,255,255,0.5);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    position: absolute;
 }
 
 .lightbox-image-wrapper img {
