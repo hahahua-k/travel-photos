@@ -32,18 +32,7 @@
         <section class="map-section">
             <div class="map-wrapper" id="map-wrapper">
                 <div class="map-scene" id="map-scene">
-                    <svg class="china-map" id="china-map" viewBox="620 60 180 600" xmlns="http://www.w3.org/2000/svg">
-                        <defs>
-                            <linearGradient id="mapGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                                <stop offset="0%" style="stop-color:rgba(67,97,238,0.25);stop-opacity:1" />
-                                <stop offset="100%" style="stop-color:rgba(114,9,183,0.15);stop-opacity:1" />
-                            </linearGradient>
-                            <filter id="mapShadow">
-                                <feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="rgba(67,97,238,0.3)" />
-                            </filter>
-                        </defs>
-                        <use href="china.svg#path" fill="url(#mapGrad)" stroke="rgba(67,97,238,0.4)" stroke-width="0.8" filter="url(#mapShadow)" />
-                    </svg>
+                    <img class="china-map-img" src="china.svg" alt="中国地图">
                     <div class="map-markers" id="map-markers"></div>
                 </div>
             </div>
