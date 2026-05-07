@@ -677,8 +677,14 @@
         {
           "id": "album-1778166013509",
           "name": "唐岛湾",
-          "cover": null,
-          "images": []
+          "cover": "https://raw.githubusercontent.com/hahahua-k/travel-photos/main/images/album-1778166013509/1778195540210-thumb-AGC_20260504_143314221.jpg",
+          "images": [
+            {
+              "url": "https://raw.githubusercontent.com/hahahua-k/travel-photos/main/images/album-1778166013509/1778195540210-AGC_20260504_143314221.jpg",
+              "thumbnail": "https://raw.githubusercontent.com/hahahua-k/travel-photos/main/images/album-1778166013509/1778195540210-thumb-AGC_20260504_143314221.jpg",
+              "compressed": false
+            }
+          ]
         },
         {
           "id": "album-1778166022348",
