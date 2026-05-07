@@ -98,12 +98,12 @@ const App = {
     },
 
     renderSections() {
-        const area = document.getElementById('sections-area');
-        if (!area) return;
-        area.innerHTML = '';
+        const track = document.getElementById('sections-track');
+        if (!track) return;
+        track.innerHTML = '';
 
         if (!this.config || !this.config.sections || this.config.sections.length === 0) {
-            area.innerHTML = '<p class="empty-hint">暂无板块，请在管理页面添加</p>';
+            track.innerHTML = '<p class="empty-hint">暂无板块，请在管理页面添加</p>';
             return;
         }
 
@@ -112,63 +112,86 @@ const App = {
             block.className = 'section-block';
             block.dataset.sectionId = section.id;
 
-            // 标题栏
-            const header = document.createElement('div');
-            header.className = 'section-header';
-            header.innerHTML = `
-                <span class="section-header-tag">板块 ${String(index + 1).padStart(2, '0')}</span>
-                <h2 class="section-header-title">${section.name}</h2>
-                <div class="section-header-line"></div>
-            `;
-
-            // 相册轨道
-            const track = document.createElement('div');
-            track.className = 'section-albums-track';
-
+            let albumsHtml = '';
             if (section.albums && section.albums.length > 0) {
                 section.albums.forEach((album, aIndex) => {
-                    let coverUrl = album.cover || `https://picsum.photos/400/300?random=${aIndex}`;
+                    let coverUrl = album.cover || `https://picsum.photos/100/100?random=${aIndex}`;
                     if (coverUrl.includes('raw.githubusercontent.com')) {
-                        coverUrl = `https://wsrv.nl/?url=${encodeURIComponent(coverUrl)}&w=500&q=60&output=webp`;
+                        coverUrl = `https://wsrv.nl/?url=${encodeURIComponent(coverUrl)}&w=120&q=50&output=webp`;
                     }
                     const imgCount = album.images ? album.images.length : 0;
 
-                    const albumEl = document.createElement('div');
-                    albumEl.className = 'album-item';
-                    albumEl.innerHTML = `
-                        <div class="album-item-cover">
-                            <img src="${coverUrl}" alt="${album.name}" loading="lazy"
-                                 onerror="this.src='https://picsum.photos/400/300?random=${aIndex}'">
-                        </div>
-                        <div class="album-item-info">
-                            <div class="album-item-name">${album.name}</div>
-                            <div class="album-item-count">${imgCount} 张照片</div>
+                    albumsHtml += `
+                        <div class="album-row" data-album-id="${album.id}" data-section-id="${section.id}">
+                            <div class="album-row-cover">
+                                <img src="${coverUrl}" alt="${album.name}" loading="lazy"
+                                     onerror="this.src='https://picsum.photos/100/100?random=${aIndex}'">
+                            </div>
+                            <div class="album-row-info">
+                                <div class="album-row-name">${album.name}</div>
+                                <div class="album-row-count">${imgCount} 张照片</div>
+                            </div>
+                            <div class="album-row-arrow">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/><polyline points="12 5 19 12 12 19"/></svg>
+                            </div>
                         </div>
                     `;
-
-                    albumEl.addEventListener('click', () => {
-                        window.location.href = `gallery.html?section=${section.id}&album=${album.id}`;
-                    });
-
-                    track.appendChild(albumEl);
                 });
             } else {
-                track.innerHTML = '<p style="color: rgba(255,255,255,0.2); font-size: 0.85rem; padding: 20px 0;">暂无相册</p>';
+                albumsHtml = '<p style="text-align: center; color: rgba(255,255,255,0.2); font-size: 0.85rem; padding: 30px 0;">暂无相册</p>';
             }
 
-            // 拖拽滚动
-            this.initDragScroll(track);
+            block.innerHTML = `
+                <div class="section-header">
+                    <span class="section-header-tag">板块 ${String(index + 1).padStart(2, '0')}</span>
+                    <h3 class="section-header-title">${section.name}</h3>
+                </div>
+                <div class="section-albums">
+                    ${albumsHtml}
+                </div>
+            `;
 
-            block.appendChild(header);
-            block.appendChild(track);
-            area.appendChild(block);
+            // 相册点击
+            block.querySelectorAll('.album-row').forEach(el => {
+                el.addEventListener('click', () => {
+                    window.location.href = `gallery.html?section=${el.dataset.sectionId}&album=${el.dataset.albumId}`;
+                });
+            });
+
+            // 标记点击聚焦
+            block.querySelector('.section-header').addEventListener('click', () => {
+                this.focusSection(section.id);
+            });
+
+            track.appendChild(block);
         });
 
-        // 滚动动画观察
-        this.setupScrollAnimations();
+        // 初始化板块拖拽滚动（带惯性）
+        this.initSectionsDrag(track);
+
+        if (this.config.sections.length > 0) {
+            this.focusSection(this.config.sections[0].id, false);
+        }
     },
 
-    initDragScroll(track) {
+    focusSection(sectionId, scroll = true) {
+        document.querySelectorAll('.map-marker').forEach(m => {
+            m.classList.toggle('active', m.dataset.sectionId === sectionId);
+        });
+
+        if (scroll) {
+            const block = document.querySelector(`.section-block[data-section-id="${sectionId}"]`);
+            if (block) {
+                const track = document.getElementById('sections-track');
+                const trackRect = track.getBoundingClientRect();
+                const blockRect = block.getBoundingClientRect();
+                const offset = blockRect.left - trackRect.left - (trackRect.width / 2) + (blockRect.width / 2);
+                track.scrollBy({ left: offset, behavior: 'smooth' });
+            }
+        }
+    },
+
+    initSectionsDrag(track) {
         let isDown = false;
         let startX;
         let scrollLeft;
@@ -177,110 +200,51 @@ const App = {
         let lastTime = 0;
         let rafId = null;
 
-        const onMouseDown = (e) => {
+        const onStart = (x) => {
             isDown = true;
             track.style.cursor = 'grabbing';
-            startX = e.pageX - track.offsetLeft;
+            startX = x - track.offsetLeft;
             scrollLeft = track.scrollLeft;
-            lastX = e.pageX;
+            lastX = x;
             lastTime = Date.now();
             velocity = 0;
             if (rafId) cancelAnimationFrame(rafId);
         };
 
-        const onMouseMove = (e) => {
+        const onMove = (x) => {
             if (!isDown) return;
-            e.preventDefault();
-            const x = e.pageX - track.offsetLeft;
-            const walk = (x - startX) * 1.5;
-            track.scrollLeft = scrollLeft - walk;
+            const walk = (x - startX - track.offsetLeft + scrollLeft);
+            track.scrollLeft = scrollLeft - (x - startX);
 
             const now = Date.now();
             const dt = now - lastTime;
             if (dt > 0) {
-                velocity = (e.pageX - lastX) / dt;
+                velocity = (x - lastX) / dt;
             }
-            lastX = e.pageX;
+            lastX = x;
             lastTime = now;
         };
 
-        const onMouseUp = () => {
+        const onEnd = () => {
             isDown = false;
             track.style.cursor = 'grab';
-
-            // 惯性滚动
-            let currentVelocity = velocity * 150;
-            const decelerate = () => {
-                if (Math.abs(currentVelocity) < 0.5) return;
-                track.scrollLeft -= currentVelocity;
-                currentVelocity *= 0.95; // 摩擦系数
-                rafId = requestAnimationFrame(decelerate);
+            let v = velocity * 200;
+            const decay = () => {
+                if (Math.abs(v) < 0.5) return;
+                track.scrollLeft -= v;
+                v *= 0.94;
+                rafId = requestAnimationFrame(decay);
             };
-            decelerate();
+            decay();
         };
 
-        track.addEventListener('mousedown', onMouseDown);
-        window.addEventListener('mousemove', onMouseMove);
-        window.addEventListener('mouseup', onMouseUp);
+        track.addEventListener('mousedown', (e) => onStart(e.pageX));
+        window.addEventListener('mousemove', (e) => onMove(e.pageX));
+        window.addEventListener('mouseup', onEnd);
 
-        // 触摸支持
-        let touchStartX = 0;
-        let touchScrollLeft = 0;
-        let touchLastX = 0;
-        let touchLastTime = 0;
-
-        track.addEventListener('touchstart', (e) => {
-            touchStartX = e.touches[0].pageX;
-            touchScrollLeft = track.scrollLeft;
-            touchLastX = touchStartX;
-            touchLastTime = Date.now();
-            velocity = 0;
-            if (rafId) cancelAnimationFrame(rafId);
-        }, { passive: true });
-
-        track.addEventListener('touchmove', (e) => {
-            const x = e.touches[0].pageX;
-            const walk = (touchStartX - x) * 1.2;
-            track.scrollLeft = touchScrollLeft + walk;
-
-            const now = Date.now();
-            const dt = now - touchLastTime;
-            if (dt > 0) {
-                velocity = (x - touchLastX) / dt;
-            }
-            touchLastX = x;
-            touchLastTime = now;
-        }, { passive: true });
-
-        track.addEventListener('touchend', () => {
-            let currentVelocity = velocity * 150;
-            const decelerate = () => {
-                if (Math.abs(currentVelocity) < 0.5) return;
-                track.scrollLeft -= currentVelocity;
-                currentVelocity *= 0.95;
-                rafId = requestAnimationFrame(decelerate);
-            };
-            decelerate();
-        });
-    },
-
-    setupScrollAnimations() {
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    entry.target.classList.add('visible');
-                } else {
-                    entry.target.classList.remove('visible');
-                }
-            });
-        }, {
-            threshold: 0.1,
-            rootMargin: '0px 0px -40px 0px'
-        });
-
-        document.querySelectorAll('.section-block').forEach(el => {
-            observer.observe(el);
-        });
+        track.addEventListener('touchstart', (e) => onStart(e.touches[0].pageX), { passive: true });
+        track.addEventListener('touchmove', (e) => onMove(e.touches[0].pageX), { passive: true });
+        track.addEventListener('touchend', onEnd);
     },
 
     focusSection(sectionId, scroll = true) {
