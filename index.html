@@ -32,60 +32,17 @@
         <section class="map-section">
             <div class="map-wrapper" id="map-wrapper">
                 <div class="map-scene" id="map-scene">
-                    <svg class="china-map" id="china-map" viewBox="0 0 800 700" xmlns="http://www.w3.org/2000/svg">
+                    <svg class="china-map" id="china-map" viewBox="620 60 180 600" xmlns="http://www.w3.org/2000/svg">
                         <defs>
                             <linearGradient id="mapGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                                <stop offset="0%" style="stop-color:rgba(67,97,238,0.2);stop-opacity:1" />
-                                <stop offset="50%" style="stop-color:rgba(114,9,183,0.12);stop-opacity:1" />
-                                <stop offset="100%" style="stop-color:rgba(6,214,160,0.08);stop-opacity:1" />
+                                <stop offset="0%" style="stop-color:rgba(67,97,238,0.25);stop-opacity:1" />
+                                <stop offset="100%" style="stop-color:rgba(114,9,183,0.15);stop-opacity:1" />
                             </linearGradient>
                             <filter id="mapShadow">
-                                <feDropShadow dx="0" dy="4" stdDeviation="8" flood-color="rgba(67,97,238,0.3)" />
+                                <feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="rgba(67,97,238,0.3)" />
                             </filter>
                         </defs>
-                        <!-- 中国地图轮廓 - 基于标准地图 -->
-                        <path class="map-outline" d="
-                            M365,55 L380,50 L395,48 L410,52 L425,48 L440,50 L455,55 L465,48 L475,45
-                            L490,42 L505,45 L520,48 L535,52 L550,55 L565,58 L580,62 L595,65
-                            L610,68 L625,72 L640,75 L655,80 L668,85 L680,92 L690,100 L698,110
-                            L705,120 L710,132 L715,145 L718,158 L720,172 L722,185 L725,200
-                            L728,215 L730,230 L732,245 L735,260 L738,275 L740,290 L742,305
-                            L745,320 L748,335 L750,350 L752,365 L755,380 L758,395 L760,410
-                            L762,425 L765,440 L768,455 L770,470 L772,485 L775,500 L778,515
-                            L780,530 L782,545 L785,560 L788,575 L790,590 L792,605 L795,620
-                            L798,635 L800,650 L798,665 L795,675 L790,680 L780,678 L770,672
-                            L760,665 L750,658 L740,650 L730,642 L720,635 L710,628 L700,620
-                            L690,612 L680,605 L670,598 L660,590 L650,582 L640,575 L630,568
-                            L620,560 L610,552 L600,545 L590,538 L580,530 L570,522 L560,515
-                            L550,508 L540,500 L530,492 L520,485 L510,478 L500,470 L490,462
-                            L480,455 L470,448 L460,440 L450,432 L440,425 L430,418 L420,410
-                            L410,402 L400,395 L390,388 L380,380 L370,372 L360,365 L350,358
-                            L340,350 L330,342 L320,335 L310,328 L300,320 L290,312 L280,305
-                            L270,298 L260,290 L250,282 L240,275 L230,268 L220,260 L210,252
-                            L200,245 L190,238 L180,230 L170,222 L160,215 L150,208 L140,200
-                            L130,192 L120,185 L110,178 L100,170 L90,162 L80,155 L70,148
-                            L60,140 L52,132 L48,122 L45,112 L42,102 L40,92 L38,82
-                            L36,72 L35,62 L38,52 L45,45 L55,40 L68,38 L82,36
-                            L98,35 L115,36 L132,38 L150,42 L168,48 L185,55 L200,60
-                            L215,62 L230,60 L245,58 L260,55 L275,52 L290,50 L305,48
-                            L320,46 L335,48 L350,50 L365,55 Z
-                            M700,580 L710,575 L720,578 L728,585 L732,595 L735,605 L738,615
-                            L740,625 L742,635 L740,645 L735,650 L728,648 L720,642 L712,635
-                            L705,628 L700,620 L698,610 L695,600 L695,590 L700,580 Z
-                            M710,200 L718,195 L725,200 L730,210 L735,220 L738,232 L740,245
-                            L742,258 L740,270 L735,278 L728,275 L720,268 L715,258 L712,248
-                            L710,238 L708,228 L705,218 L705,208 L710,200 Z
-                        "
-                        fill="url(#mapGrad)" stroke="rgba(67,97,238,0.4)" stroke-width="1.5" filter="url(#mapShadow)" />
-                        <!-- 台湾 -->
-                        <ellipse cx="755" cy="480" rx="18" ry="28" fill="url(#mapGrad)" stroke="rgba(67,97,238,0.3)" stroke-width="1" transform="rotate(-20, 755, 480)" />
-                        <!-- 海南 -->
-                        <ellipse cx="620" cy="630" rx="22" ry="16" fill="url(#mapGrad)" stroke="rgba(67,97,238,0.3)" stroke-width="1" />
-                        <!-- 南海诸岛示意 -->
-                        <rect x="640" y="640" width="80" height="50" rx="4" fill="none" stroke="rgba(67,97,238,0.15)" stroke-width="0.5" stroke-dasharray="4,2" />
-                        <!-- 网格线 -->
-                        <path class="map-grid" d="M0,175 L800,175 M0,350 L800,350 M0,525 L800,525 M200,0 L200,700 M400,0 L400,700 M600,0 L600,700"
-                              stroke="rgba(255,255,255,0.015)" stroke-width="0.5" fill="none" />
+                        <use href="china.svg#path" fill="url(#mapGrad)" stroke="rgba(67,97,238,0.4)" stroke-width="0.8" filter="url(#mapShadow)" />
                     </svg>
                     <div class="map-markers" id="map-markers"></div>
                 </div>
