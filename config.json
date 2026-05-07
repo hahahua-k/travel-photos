@@ -852,8 +852,14 @@
         {
           "id": "album-1778166905537",
           "name": "街巷",
-          "cover": null,
-          "images": []
+          "cover": "https://raw.githubusercontent.com/hahahua-k/travel-photos/main/images/album-1778166905537/1778196737691-thumb-AGC_20260504_132143322.jpg",
+          "images": [
+            {
+              "url": "https://raw.githubusercontent.com/hahahua-k/travel-photos/main/images/album-1778166905537/1778196737691-AGC_20260504_132143322.jpg",
+              "thumbnail": "https://raw.githubusercontent.com/hahahua-k/travel-photos/main/images/album-1778166905537/1778196737691-thumb-AGC_20260504_132143322.jpg",
+              "compressed": false
+            }
+          ]
         },
         {
           "id": "album-1778166917487",
