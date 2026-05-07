@@ -31,6 +31,27 @@ const App = {
         try {
             this.config = await GitHubAPI.getConfig();
             if (loading) loading.style.display = 'none';
+            
+            // 兼容旧数据
+            if (this.config.regions && !this.config.sections) {
+                this.config.sections = [{
+                    id: 'section-migrated',
+                    name: '我的旅行',
+                    mapX: 60,
+                    mapY: 45,
+                    albums: this.config.regions.map(r => ({
+                        id: r.id,
+                        name: r.name,
+                        cover: r.cover,
+                        images: r.images || []
+                    }))
+                }];
+            }
+            
+            if (!this.config.sections) {
+                this.config.sections = [];
+            }
+            
             this.renderMarkers();
             this.renderSections();
         } catch (error) {
@@ -88,47 +109,99 @@ const App = {
 
         this.config.sections.forEach((section, index) => {
             const albumCount = section.albums ? section.albums.length : 0;
-            let totalImages = 0;
-            if (section.albums) {
-                section.albums.forEach(album => {
-                    totalImages += album.images ? album.images.length : 0;
-                });
-            }
-
-            let coverUrl = '';
-            if (section.albums && section.albums.length > 0 && section.albums[0].cover) {
-                coverUrl = section.albums[0].cover;
-            }
-            if (!coverUrl) {
-                coverUrl = `https://picsum.photos/640/400?random=${index}`;
-            }
-            if (coverUrl.includes('raw.githubusercontent.com')) {
-                coverUrl = `https://wsrv.nl/?url=${encodeURIComponent(coverUrl)}&w=800&q=70&output=webp`;
-            }
 
             const card = document.createElement('div');
             card.className = 'album-card';
             card.dataset.sectionId = section.id;
 
+            let albumsHtml = '';
+            if (section.albums && section.albums.length > 0) {
+                section.albums.forEach((album, aIndex) => {
+                    let coverUrl = album.cover || `https://picsum.photos/100/100?random=${aIndex}`;
+                    if (coverUrl.includes('raw.githubusercontent.com')) {
+                        coverUrl = `https://wsrv.nl/?url=${encodeURIComponent(coverUrl)}&w=150&q=50&output=webp`;
+                    }
+                    const imgCount = album.images ? album.images.length : 0;
+                    albumsHtml += `
+                        <div class="album-card-album" data-album-id="${album.id}" data-section-id="${section.id}">
+                            <div class="album-card-album-cover">
+                                <img src="${coverUrl}" alt="${album.name}" loading="lazy"
+                                     onerror="this.src='https://picsum.photos/100/100?random=${aIndex}'">
+                            </div>
+                            <div class="album-card-album-info">
+                                <div class="album-card-album-name">${album.name}</div>
+                                <div class="album-card-album-count">${imgCount} 张照片</div>
+                            </div>
+                            <div class="album-card-album-arrow">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/><polyline points="12 5 19 12 12 19"/></svg>
+                            </div>
+                        </div>
+                    `;
+                });
+            } else {
+                albumsHtml = '<p style="text-align: center; color: rgba(255,255,255,0.2); font-size: 0.85rem; padding: 20px 0;">暂无相册</p>';
+            }
+
             card.innerHTML = `
-                <div class="album-card-cover">
-                    <img src="${coverUrl}" alt="${section.name}" loading="lazy"
-                         onerror="this.src='https://picsum.photos/640/400?random=${index}'">
-                </div>
-                <div class="album-card-info">
+                <div class="album-card-header">
                     <span class="album-card-tag">板块 ${String(index + 1).padStart(2, '0')}</span>
                     <h3 class="album-card-title">${section.name}</h3>
-                    <p class="album-card-meta">${albumCount} 个相册 · ${totalImages} 张照片</p>
+                </div>
+                <div class="album-card-albums">
+                    ${albumsHtml}
                 </div>
             `;
 
-            card.addEventListener('click', () => this.handleSectionClick(section));
+            // 相册点击进入画廊
+            card.querySelectorAll('.album-card-album').forEach(el => {
+                el.addEventListener('click', () => {
+                    const sectionId = el.dataset.sectionId;
+                    const albumId = el.dataset.albumId;
+                    window.location.href = `gallery.html?section=${sectionId}&album=${albumId}`;
+                });
+            });
+
             track.appendChild(card);
         });
+
+        // 初始化视差滚动
+        this.initParallax();
 
         if (this.config.sections.length > 0) {
             this.focusSection(this.config.sections[0].id, false);
         }
+    },
+
+    initParallax() {
+        const track = document.getElementById('albums-track');
+        if (!track) return;
+
+        let lastScrollLeft = 0;
+        let ticking = false;
+
+        const updateParallax = () => {
+            const cards = track.querySelectorAll('.album-card');
+            const scrollLeft = track.scrollLeft;
+
+            cards.forEach(card => {
+                const albums = card.querySelectorAll('.album-card-album');
+                albums.forEach((album, index) => {
+                    // 越靠下的相册，位移越小（视差效果）
+                    const parallaxFactor = 1 - (index * 0.08);
+                    const offset = scrollLeft * (1 - parallaxFactor) * 0.15;
+                    album.style.transform = `translateX(${-offset}px)`;
+                });
+            });
+
+            ticking = false;
+        };
+
+        track.addEventListener('scroll', () => {
+            if (!ticking) {
+                requestAnimationFrame(updateParallax);
+                ticking = true;
+            }
+        }, { passive: true });
     },
 
     focusSection(sectionId, scroll = true) {

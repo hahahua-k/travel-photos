@@ -42,6 +42,27 @@ const Admin = {
     async loadSections() {
         try {
             this.config = await GitHubAPI.getConfig();
+            
+            // 兼容旧数据：如果只有regions没有sections，自动迁移
+            if (this.config.regions && !this.config.sections) {
+                this.config.sections = [{
+                    id: 'section-migrated',
+                    name: '我的旅行',
+                    mapX: 60,
+                    mapY: 45,
+                    albums: this.config.regions.map(r => ({
+                        id: r.id,
+                        name: r.name,
+                        cover: r.cover,
+                        images: r.images || [],
+                        protected: r.protected || false
+                    }))
+                }];
+                // 保留旧regions以防万一
+                await this.saveConfigToGitHub();
+                this.showMessage('已自动迁移旧数据到板块系统', 'success');
+            }
+            
             if (!this.config.sections) {
                 this.config.sections = [];
             }
@@ -113,9 +134,10 @@ const Admin = {
         const success = await this.saveConfigToGitHub();
         if (success) {
             this.renderSections();
-            this.showMessage(`板块"${name}"创建成功`, 'success');
+            this.showMessage('板块"' + name + '"创建成功！', 'success');
         } else {
-            this.config.sections.pop();
+            // 回滚
+            this.config.sections = this.config.sections.filter(s => s.id !== id);
             this.showMessage('创建失败，请检查网络和 Token 权限', 'error');
         }
     },
