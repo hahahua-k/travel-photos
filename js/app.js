@@ -196,26 +196,22 @@ const App = {
     /* ========== 板块拖拽滚动 ========== */
     initSectionsDrag(track) {
         let isDown = false;
-        let startX;
-        let scrollLeft;
-        let velocity = 0;
+        let startX = 0;
+        let scrollLeftStart = 0;
         let lastX = 0;
         let lastTime = 0;
+        let velocity = 0;
         let autoScrollPaused = false;
         let autoSpeed = 0.42;
         let originalWidth = 0;
+        let hasMoved = false;
 
-        // 克隆内容实现无缝循环
         const setupSeamless = () => {
             const items = track.querySelectorAll('.section-block');
             if (items.length === 0) return;
-
             const gap = 28;
             originalWidth = 0;
-            items.forEach(item => {
-                originalWidth += item.offsetWidth + gap;
-            });
-
+            items.forEach(item => { originalWidth += item.offsetWidth + gap; });
             items.forEach(item => {
                 const clone = item.cloneNode(true);
                 clone.classList.add('clone');
@@ -230,27 +226,21 @@ const App = {
 
         requestAnimationFrame(() => setupSeamless());
 
-        // 自动流动
         const autoScroll = () => {
             if (isDown || autoScrollPaused) {
                 requestAnimationFrame(autoScroll);
                 return;
             }
-
             track.scrollLeft += autoSpeed;
-
             if (originalWidth > 0 && track.scrollLeft >= originalWidth) {
                 track.scrollLeft -= originalWidth;
             }
-
             requestAnimationFrame(autoScroll);
         };
 
         const pauseAuto = (duration) => {
             autoScrollPaused = true;
-            if (duration) {
-                setTimeout(() => { autoScrollPaused = false; }, duration);
-            }
+            if (duration) setTimeout(() => { autoScrollPaused = false; }, duration);
         };
 
         const resumeAuto = (delay) => {
@@ -262,9 +252,10 @@ const App = {
 
         const onStart = (x) => {
             isDown = true;
+            hasMoved = false;
             track.style.cursor = 'grabbing';
-            startX = x - track.offsetLeft;
-            scrollLeft = track.scrollLeft;
+            startX = x;
+            scrollLeftStart = track.scrollLeft;
             lastX = x;
             lastTime = Date.now();
             velocity = 0;
@@ -272,49 +263,68 @@ const App = {
 
         const onMove = (x) => {
             if (!isDown) return;
-            track.scrollLeft = scrollLeft - (x - startX);
+            const dx = x - startX;
+            if (Math.abs(dx) > 3) hasMoved = true;
+            track.scrollLeft = scrollLeftStart - dx;
 
             const now = Date.now();
             const dt = now - lastTime;
-            if (dt > 0) {
+            if (dt > 20) {
                 velocity = (x - lastX) / dt;
+                lastX = x;
+                lastTime = now;
             }
-            lastX = x;
-            lastTime = now;
         };
 
         const onEnd = () => {
+            if (!isDown) return;
             isDown = false;
             track.style.cursor = 'grab';
 
-            let v = velocity * 150;
+            let v = velocity * 100;
+            v = Math.max(-30, Math.min(30, v));
+
             const decay = () => {
                 if (Math.abs(v) < 0.3) {
                     resumeAuto(1500);
                     return;
                 }
                 track.scrollLeft -= v;
-
                 if (originalWidth > 0 && track.scrollLeft >= originalWidth) {
                     track.scrollLeft -= originalWidth;
                 }
-
+                if (originalWidth > 0 && track.scrollLeft < 0) {
+                    track.scrollLeft += originalWidth;
+                }
                 v *= 0.95;
                 requestAnimationFrame(decay);
             };
             decay();
         };
 
-        track.addEventListener('mousedown', (e) => { onStart(e.pageX); pauseAuto(); });
-        window.addEventListener('mousemove', (e) => onMove(e.pageX));
-        window.addEventListener('mouseup', onEnd);
+        // 鼠标事件
+        track.addEventListener('mousedown', (e) => { e.preventDefault(); onStart(e.pageX); pauseAuto(); });
+        window.addEventListener('mousemove', (e) => { if (isDown) onMove(e.pageX); });
+        window.addEventListener('mouseup', () => { if (isDown) onEnd(); });
 
-        track.addEventListener('touchstart', (e) => { onStart(e.touches[0].pageX); pauseAuto(); }, { passive: true });
-        track.addEventListener('touchmove', (e) => onMove(e.touches[0].pageX), { passive: true });
-        track.addEventListener('touchend', onEnd);
+        // 触摸事件 - 关键修复
+        track.addEventListener('touchstart', (e) => {
+            onStart(e.touches[0].pageX);
+            pauseAuto();
+        }, { passive: true });
 
+        track.addEventListener('touchmove', (e) => {
+            if (!isDown) return;
+            onMove(e.touches[0].pageX);
+        }, { passive: true });
+
+        track.addEventListener('touchend', () => {
+            if (isDown) onEnd();
+        }, { passive: true });
+
+        // 悬停暂停（仅桌面）
         track.addEventListener('mouseenter', () => { autoScrollPaused = true; });
-        track.addEventListener('mouseleave', () => { autoScrollPaused = false; });
+        track.addEventListener('mouseleave', () => { if (!isDown) autoScrollPaused = false; });
 
         requestAnimationFrame(autoScroll);
     },

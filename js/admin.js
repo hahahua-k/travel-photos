@@ -309,34 +309,62 @@ const Admin = {
         }
     },
 
-    uploadImages() {
-        const fileInput = document.getElementById('album-file-input');
-        if (!fileInput || !fileInput.files.length) return;
+    async uploadImages() {
+        if (!this.currentSectionId) {
+            this.showMessage('请先选择一个板块', 'error');
+            return;
+        }
 
         const section = this.config.sections.find(s => s.id === this.currentSectionId);
         if (!section) return;
 
-        const albumId = prompt('请输入要添加到的相册ID（或留空创建新相册）:');
-        let album;
+        // 让用户选择相册
+        let albumId = '';
+        if (section.albums && section.albums.length > 0) {
+            const albumNames = section.albums.map((a, i) => `${i + 1}. ${a.name}`).join('\n');
+            const choice = prompt(`选择相册（输入序号）或留空创建新相册：\n${albumNames}`);
+            if (choice && !isNaN(choice)) {
+                const index = parseInt(choice) - 1;
+                if (index >= 0 && index < section.albums.length) {
+                    albumId = section.albums[index].id;
+                }
+            }
+        }
 
+        let album;
         if (albumId) {
             album = section.albums.find(a => a.id === albumId);
         }
 
         if (!album) {
-            const albumName = prompt('请输入相册名称:', '新相册');
+            const albumName = prompt('请输入新相册名称:', '新相册');
             if (!albumName) return;
-
             album = {
                 id: 'album-' + Date.now(),
                 name: albumName,
                 cover: null,
                 images: []
             };
+            if (!section.albums) section.albums = [];
             section.albums.push(album);
+            await this.saveConfigToGitHub();
+            this.renderAlbums();
         }
 
-        this.handleFileUpload(fileInput.files, album);
+        // 触发文件选择
+        this.pendingAlbum = album;
+        document.getElementById('album-file-input').click();
+    },
+
+    async handleSelectedFiles(files) {
+        if (!files || files.length === 0) return;
+        if (!this.pendingAlbum) {
+            this.showMessage('请先选择相册', 'error');
+            return;
+        }
+
+        await this.handleFileUpload(files, this.pendingAlbum);
+        this.pendingAlbum = null;
     },
 
     async handleFileUpload(files, album) {
@@ -463,6 +491,14 @@ const Admin = {
         document.getElementById('add-section').addEventListener('click', () => this.showAddSectionForm());
         document.getElementById('add-album').addEventListener('click', () => this.showAddAlbumForm());
         document.getElementById('upload-images').addEventListener('click', () => this.uploadImages());
+        
+        // 文件选择事件
+        document.getElementById('album-file-input').addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                this.handleSelectedFiles(e.target.files);
+                e.target.value = '';
+            }
+        });
     }
 };
 
