@@ -781,8 +781,14 @@
         {
           "id": "album-1778166098873",
           "name": "五四广场",
-          "cover": null,
-          "images": []
+          "cover": "https://raw.githubusercontent.com/hahahua-k/travel-photos/main/images/album-1778166098873/1778196484634-thumb-AGC9.9_R2_20260308_194139655.jpg",
+          "images": [
+            {
+              "url": "https://raw.githubusercontent.com/hahahua-k/travel-photos/main/images/album-1778166098873/1778196484634-AGC9.9_R2_20260308_194139655.jpg",
+              "thumbnail": "https://raw.githubusercontent.com/hahahua-k/travel-photos/main/images/album-1778166098873/1778196484634-thumb-AGC9.9_R2_20260308_194139655.jpg",
+              "compressed": true
+            }
+          ]
         },
         {
           "id": "album-1778166103067",
