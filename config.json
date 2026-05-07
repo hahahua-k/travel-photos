@@ -825,8 +825,14 @@
         {
           "id": "album-1778166900537",
           "name": "岸边",
-          "cover": null,
-          "images": []
+          "cover": "https://raw.githubusercontent.com/hahahua-k/travel-photos/main/images/album-1778166900537/1778196659862-thumb-AGC9.9_R2_20251107_183534032.jpg",
+          "images": [
+            {
+              "url": "https://raw.githubusercontent.com/hahahua-k/travel-photos/main/images/album-1778166900537/1778196659862-AGC9.9_R2_20251107_183534032.jpg",
+              "thumbnail": "https://raw.githubusercontent.com/hahahua-k/travel-photos/main/images/album-1778166900537/1778196659862-thumb-AGC9.9_R2_20251107_183534032.jpg",
+              "compressed": false
+            }
+          ]
         },
         {
           "id": "album-1778166905537",
