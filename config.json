@@ -329,5 +329,14 @@
       ],
       "protected": false
     }
+  ],
+  "sections": [
+    {
+      "id": "section-1778157965640",
+      "name": "济南",
+      "mapX": 60,
+      "mapY": 40,
+      "albums": []
+    }
   ]
 }
