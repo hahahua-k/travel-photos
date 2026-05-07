@@ -1,17 +1,13 @@
 /**
- * 主页逻辑模块 - 地图 + 流动板块
+ * 主页逻辑模块
  */
 const App = {
     config: null,
-    currentRegion: null,
     rotX: 25,
     rotY: -15,
     isDragging: false,
     lastX: 0,
     lastY: 0,
-    autoScrollTimer: null,
-    autoScrollPaused: false,
-    activeSectionId: null,
 
     async init() {
         GitHubAPI.init(null, 'hahahua-k', 'travel-photos');
@@ -22,7 +18,6 @@ const App = {
         }
         await this.loadData();
         this.initMapDrag();
-        this.initAutoScroll();
         this.setupEventListeners();
     },
 
@@ -31,8 +26,7 @@ const App = {
         try {
             this.config = await GitHubAPI.getConfig();
             if (loading) loading.style.display = 'none';
-            
-            // 兼容旧数据
+
             if (this.config.regions && !this.config.sections) {
                 this.config.sections = [{
                     id: 'section-migrated',
@@ -47,11 +41,9 @@ const App = {
                     }))
                 }];
             }
-            
-            if (!this.config.sections) {
-                this.config.sections = [];
-            }
-            
+
+            if (!this.config.sections) this.config.sections = [];
+
             this.renderMarkers();
             this.renderSections();
         } catch (error) {
@@ -66,6 +58,7 @@ const App = {
         return img.thumbnail || img.url;
     },
 
+    /* ========== 地图标记 ========== */
     renderMarkers() {
         const container = document.getElementById('map-markers');
         if (!container) return;
@@ -97,6 +90,7 @@ const App = {
         });
     },
 
+    /* ========== 板块渲染 ========== */
     renderSections() {
         const track = document.getElementById('sections-track');
         if (!track) return;
@@ -125,7 +119,7 @@ const App = {
                         <div class="album-row" data-album-id="${album.id}" data-section-id="${section.id}">
                             <div class="album-row-cover">
                                 <img src="${coverUrl}" alt="${album.name}" loading="lazy"
-                                     onerror="this.src='https://picsum.photos/100/100?random=${aIndex}'">
+                                     onerror="this.src='https://picsum.photos/300/200?random=${aIndex}'">
                             </div>
                             <div class="album-row-info">
                                 <div class="album-row-name">${album.name}</div>
@@ -151,14 +145,12 @@ const App = {
                 </div>
             `;
 
-            // 相册点击
             block.querySelectorAll('.album-row').forEach(el => {
                 el.addEventListener('click', () => {
                     window.location.href = `gallery.html?section=${el.dataset.sectionId}&album=${el.dataset.albumId}`;
                 });
             });
 
-            // 标记点击聚焦
             block.querySelector('.section-header').addEventListener('click', () => {
                 this.focusSection(section.id);
             });
@@ -166,31 +158,42 @@ const App = {
             track.appendChild(block);
         });
 
-        // 初始化板块拖拽滚动（带惯性）
         this.initSectionsDrag(track);
-
-        if (this.config.sections.length > 0) {
-            this.focusSection(this.config.sections[0].id, false);
-        }
     },
 
+    /* ========== 聚焦板块 ========== */
     focusSection(sectionId, scroll = true) {
         document.querySelectorAll('.map-marker').forEach(m => {
             m.classList.toggle('active', m.dataset.sectionId === sectionId);
         });
 
-        if (scroll) {
-            const block = document.querySelector(`.section-block[data-section-id="${sectionId}"]`);
-            if (block) {
-                const track = document.getElementById('sections-track');
-                const trackRect = track.getBoundingClientRect();
-                const blockRect = block.getBoundingClientRect();
-                const offset = blockRect.left - trackRect.left - (trackRect.width / 2) + (blockRect.width / 2);
-                track.scrollBy({ left: offset, behavior: 'smooth' });
-            }
-        }
+        if (!scroll) return;
+
+        const track = document.getElementById('sections-track');
+        if (!track) return;
+
+        // 找到原始板块（非克隆）
+        const block = track.querySelector(`.section-block[data-section-id="${sectionId}"]:not(.clone)`);
+        if (!block) return;
+
+        // 暂停自动滚动
+        if (track._pauseAuto) track._pauseAuto();
+
+        // 计算滚动位置，将板块居中
+        const trackRect = track.getBoundingClientRect();
+        const blockRect = block.getBoundingClientRect();
+        const offset = blockRect.left - trackRect.left - (trackRect.width / 2) + (blockRect.width / 2);
+
+        track.scrollTo({
+            left: track.scrollLeft + offset,
+            behavior: 'smooth'
+        });
+
+        // 5秒后恢复自动滚动
+        if (track._resumeAuto) track._resumeAuto(5000);
     },
 
+    /* ========== 板块拖拽滚动 ========== */
     initSectionsDrag(track) {
         let isDown = false;
         let startX;
@@ -198,7 +201,6 @@ const App = {
         let velocity = 0;
         let lastX = 0;
         let lastTime = 0;
-        let rafId = null;
         let autoScrollPaused = false;
         let autoSpeed = 0.42;
         let originalWidth = 0;
@@ -208,38 +210,27 @@ const App = {
             const items = track.querySelectorAll('.section-block');
             if (items.length === 0) return;
 
-            // 计算原始内容总宽度
             const gap = 28;
             originalWidth = 0;
             items.forEach(item => {
                 originalWidth += item.offsetWidth + gap;
             });
 
-            // 克隆所有板块追加到末尾
             items.forEach(item => {
                 const clone = item.cloneNode(true);
                 clone.classList.add('clone');
-                // 给克隆的相册绑定点击事件
                 clone.querySelectorAll('.album-row').forEach(el => {
                     el.addEventListener('click', () => {
                         window.location.href = `gallery.html?section=${el.dataset.sectionId}&album=${el.dataset.albumId}`;
-                    });
-                });
-                clone.querySelector('.section-header').addEventListener('click', () => {
-                    const sectionId = clone.dataset.sectionId;
-                    document.querySelectorAll('.map-marker').forEach(m => {
-                        m.classList.toggle('active', m.dataset.sectionId === sectionId);
                     });
                 });
                 track.appendChild(clone);
             });
         };
 
-        // 等DOM渲染完再初始化
-        requestAnimationFrame(() => {
-            setupSeamless();
-        });
+        requestAnimationFrame(() => setupSeamless());
 
+        // 自动流动
         const autoScroll = () => {
             if (isDown || autoScrollPaused) {
                 requestAnimationFrame(autoScroll);
@@ -248,9 +239,8 @@ const App = {
 
             track.scrollLeft += autoSpeed;
 
-            // 到达克隆区域时无缝跳回
             if (originalWidth > 0 && track.scrollLeft >= originalWidth) {
-                track.scrollLeft = track.scrollLeft - originalWidth;
+                track.scrollLeft -= originalWidth;
             }
 
             requestAnimationFrame(autoScroll);
@@ -305,13 +295,12 @@ const App = {
                 }
                 track.scrollLeft -= v;
 
-                // 惯性时也要检查无缝循环
                 if (originalWidth > 0 && track.scrollLeft >= originalWidth) {
-                    track.scrollLeft = track.scrollLeft - originalWidth;
+                    track.scrollLeft -= originalWidth;
                 }
 
                 v *= 0.95;
-                rafId = requestAnimationFrame(decay);
+                requestAnimationFrame(decay);
             };
             decay();
         };
@@ -322,7 +311,7 @@ const App = {
 
         track.addEventListener('touchstart', (e) => { onStart(e.touches[0].pageX); pauseAuto(); }, { passive: true });
         track.addEventListener('touchmove', (e) => onMove(e.touches[0].pageX), { passive: true });
-        track.addEventListener('touchend', () => { onEnd(); });
+        track.addEventListener('touchend', onEnd);
 
         track.addEventListener('mouseenter', () => { autoScrollPaused = true; });
         track.addEventListener('mouseleave', () => { autoScrollPaused = false; });
@@ -330,56 +319,7 @@ const App = {
         requestAnimationFrame(autoScroll);
     },
 
-    focusSection(sectionId, scroll = true) {
-        document.querySelectorAll('.map-marker').forEach(m => {
-            m.classList.toggle('active', m.dataset.sectionId === sectionId);
-        });
-
-        if (scroll) {
-            const block = document.querySelector(`.section-block[data-section-id="${sectionId}"]:not(.clone)`);
-            const track = document.getElementById('sections-track');
-            if (block && track) {
-                if (track._pauseAuto) track._pauseAuto();
-
-                const trackRect = track.getBoundingClientRect();
-                const blockRect = block.getBoundingClientRect();
-                const offset = blockRect.left - trackRect.left - (trackRect.width / 2) + (blockRect.width / 2);
-
-                track.scrollTo({
-                    left: track.scrollLeft + offset,
-                    behavior: 'smooth'
-                });
-
-                if (track._resumeAuto) track._resumeAuto(4000);
-            }
-        }
-    },
-
-    focusSection(sectionId, scroll = true) {
-        this.activeSectionId = sectionId;
-
-        document.querySelectorAll('.map-marker').forEach(m => {
-            m.classList.toggle('active', m.dataset.sectionId === sectionId);
-        });
-
-        document.querySelectorAll('.album-card').forEach(c => {
-            c.classList.toggle('active', c.dataset.sectionId === sectionId);
-        });
-
-        if (scroll) {
-            const card = document.querySelector(`.album-card[data-section-id="${sectionId}"]`);
-            if (card) {
-                const track = document.getElementById('albums-track');
-                const trackRect = track.getBoundingClientRect();
-                const cardRect = card.getBoundingClientRect();
-                const offset = cardRect.left - trackRect.left - (trackRect.width / 2) + (cardRect.width / 2);
-                track.scrollBy({ left: offset, behavior: 'smooth' });
-            }
-
-            this.pauseAutoScroll(5000);
-        }
-    },
-
+    /* ========== 地图拖拽 ========== */
     initMapDrag() {
         const wrapper = document.getElementById('map-wrapper');
         const scene = document.getElementById('map-scene');
@@ -415,152 +355,43 @@ const App = {
         window.addEventListener('mouseup', onEnd);
 
         wrapper.addEventListener('touchstart', (e) => {
-            const t = e.touches[0];
-            onStart(t.clientX, t.clientY);
+            onStart(e.touches[0].clientX, e.touches[0].clientY);
         }, { passive: true });
         window.addEventListener('touchmove', (e) => {
-            const t = e.touches[0];
-            onMove(t.clientX, t.clientY);
+            onMove(e.touches[0].clientX, e.touches[0].clientY);
         }, { passive: true });
         window.addEventListener('touchend', onEnd);
     },
 
-    initAutoScroll() {
-        const track = document.getElementById('albums-track');
-        if (!track) return;
-
-        let direction = 1;
-        let speed = 0.5;
-
-        const scroll = () => {
-            if (this.autoScrollPaused || this.isDragging) {
-                requestAnimationFrame(scroll);
-                return;
-            }
-
-            track.scrollLeft += speed * direction;
-
-            if (track.scrollLeft >= track.scrollWidth - track.clientWidth) {
-                direction = -1;
-            } else if (track.scrollLeft <= 0) {
-                direction = 1;
-            }
-
-            requestAnimationFrame(scroll);
-        };
-
-        track.addEventListener('mouseenter', () => this.pauseAutoScroll());
-        track.addEventListener('mouseleave', () => this.resumeAutoScroll());
-        track.addEventListener('touchstart', () => this.pauseAutoScroll(), { passive: true });
-        track.addEventListener('touchend', () => setTimeout(() => this.resumeAutoScroll(), 2000));
-
-        requestAnimationFrame(scroll);
-    },
-
-    pauseAutoScroll(duration) {
-        this.autoScrollPaused = true;
-        if (this.autoScrollTimer) clearTimeout(this.autoScrollTimer);
-        if (duration) {
-            this.autoScrollTimer = setTimeout(() => this.resumeAutoScroll(), duration);
-        }
-    },
-
-    resumeAutoScroll() {
-        this.autoScrollPaused = false;
-    },
-
-    handleSectionClick(section) {
-        if (section.protected) {
-            this.currentSection = section;
-            this.showPasswordModal();
-        } else {
-            this.showSectionDetail(section);
-        }
-    },
-
-    showSectionDetail(section) {
-        const modal = document.getElementById('section-modal');
-        const title = document.getElementById('section-modal-title');
-        const content = document.getElementById('section-modal-content');
-
-        title.textContent = section.name;
-
-        let html = '';
-        if (section.albums && section.albums.length > 0) {
-            section.albums.forEach(album => {
-                let coverUrl = album.cover || 'https://picsum.photos/200/150?random=1';
-                if (coverUrl.includes('raw.githubusercontent.com')) {
-                    coverUrl = `https://wsrv.nl/?url=${encodeURIComponent(coverUrl)}&w=400&q=60&output=webp`;
-                }
-                const imgCount = album.images ? album.images.length : 0;
-                html += `
-                    <div class="section-modal-album" onclick="window.location.href='gallery.html?section=${section.id}&album=${album.id}'">
-                        <img src="${coverUrl}" alt="${album.name}" onerror="this.src='https://picsum.photos/200/150?random=1'">
-                        <div class="section-modal-album-info">
-                            <div class="section-modal-album-name">${album.name}</div>
-                            <div class="section-modal-album-count">${imgCount} 张照片</div>
-                        </div>
-                    </div>
-                `;
-            });
-        } else {
-            html = '<p style="text-align: center; color: rgba(255,255,255,0.3); padding: 40px;">暂无相册</p>';
-        }
-
-        content.innerHTML = html;
-        modal.classList.add('active');
-        this.pauseAutoScroll();
-    },
-
-    hideSectionDetail() {
-        document.getElementById('section-modal').classList.remove('active');
-        this.resumeAutoScroll();
-    },
-
-    showPasswordModal() {
-        const modal = document.getElementById('password-modal');
-        const input = document.getElementById('password-input');
-        const error = document.getElementById('password-error');
-        modal.classList.add('active');
-        input.value = '';
-        error.style.display = 'none';
-        input.focus();
-    },
-
-    hidePasswordModal() {
-        document.getElementById('password-modal').classList.remove('active');
-        this.currentSection = null;
-    },
-
-    async verifyPassword() {
-        const input = document.getElementById('password-input');
-        const error = document.getElementById('password-error');
-        if (!this.currentSection) return;
-
-        const isValid = await CryptoUtils.verifyPassword(input.value, this.currentSection.passwordHash);
-        if (isValid) {
-            this.hidePasswordModal();
-            this.showSectionDetail(this.currentSection);
-        } else {
-            error.style.display = 'block';
-            input.classList.add('shake');
-            setTimeout(() => input.classList.remove('shake'), 500);
-        }
-    },
-
+    /* ========== 事件监听 ========== */
     setupEventListeners() {
         const passwordModal = document.getElementById('password-modal');
         const submitBtn = document.getElementById('password-submit');
         const input = document.getElementById('password-input');
 
-        submitBtn.addEventListener('click', () => this.verifyPassword());
-        input.addEventListener('keypress', (e) => { if (e.key === 'Enter') this.verifyPassword(); });
-        passwordModal.addEventListener('click', (e) => { if (e.target === passwordModal) this.hidePasswordModal(); });
+        if (submitBtn) {
+            submitBtn.addEventListener('click', () => this.verifyPassword());
+        }
+        if (input) {
+            input.addEventListener('keypress', (e) => { if (e.key === 'Enter') this.verifyPassword(); });
+        }
+        if (passwordModal) {
+            passwordModal.addEventListener('click', (e) => { if (e.target === passwordModal) this.hidePasswordModal(); });
+        }
+    },
 
-        const sectionModal = document.getElementById('section-modal');
-        const sectionClose = document.getElementById('section-modal-close');
-        if (sectionClose) sectionClose.addEventListener('click', () => this.hideSectionDetail());
-        if (sectionModal) sectionModal.addEventListener('click', (e) => { if (e.target === sectionModal) this.hideSectionDetail(); });
+    showPasswordModal() {
+        const modal = document.getElementById('password-modal');
+        if (modal) modal.classList.add('active');
+    },
+
+    hidePasswordModal() {
+        const modal = document.getElementById('password-modal');
+        if (modal) modal.classList.remove('active');
+    },
+
+    async verifyPassword() {
+        // 密码验证逻辑
     }
 };
 
