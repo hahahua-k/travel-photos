@@ -302,20 +302,20 @@ const Admin = {
                     region.cover = thumbUrl || url;
                 }
                 uploadedCount++;
+
+                this.updateLoading(`正在保存配置 (${currentFileIndex}/${totalFiles})`, file.name, false);
+                await this.saveConfigToGitHub();
+                this.renderImages();
+                this.renderRegions();
             } else {
                 failedCount++;
                 failedFiles.push(file.name);
             }
         }
 
-        this.updateLoading('正在保存配置...', '', false);
-        this.hideProgress();
-        const success = await this.saveConfigToGitHub();
-        this.renderImages();
-        this.renderRegions();
         this.hideLoading();
 
-        if (success && uploadedCount > 0) {
+        if (uploadedCount > 0) {
             let message = `${uploadedCount} 张图片上传成功`;
             if (compressedCount > 0) {
                 message += `（${compressedCount} 张已压缩）`;
@@ -327,8 +327,6 @@ const Admin = {
                 }
             }
             this.showMessage(message, failedCount > 0 ? 'error' : 'success');
-        } else if (!success) {
-            this.showMessage('保存配置失败，请检查网络和 Token 权限', 'error');
         } else {
             this.showMessage(`图片上传失败: ${failedFiles.join(', ')}`, 'error');
         }
