@@ -3,7 +3,8 @@
  */
 const Admin = {
     config: null,
-    currentRegionId: null,
+    currentSectionId: null,
+    currentAlbumId: null,
 
     init() {
         this.loadConfig();
@@ -18,7 +19,7 @@ const Admin = {
             document.getElementById('owner-input').value = owner;
             document.getElementById('repo-input').value = repo;
             GitHubAPI.init(token, owner, repo);
-            this.loadRegions();
+            this.loadSections();
         }
     },
 
@@ -35,125 +36,58 @@ const Admin = {
         localStorage.setItem('github_config', JSON.stringify({ token, owner, repo }));
         GitHubAPI.init(token, owner, repo);
         this.showMessage('配置已保存', 'success');
-        this.loadRegions();
+        this.loadSections();
     },
 
-    async loadRegions() {
+    async loadSections() {
         try {
             this.config = await GitHubAPI.getConfig();
-            if (!this.config.regions) {
-                this.config.regions = [];
+            if (!this.config.sections) {
+                this.config.sections = [];
             }
-            this.migrateImageFormat();
-            this.renderRegions();
+            this.renderSections();
         } catch (error) {
             console.error('加载配置失败:', error);
-            this.config = { regions: [] };
-            this.renderRegions();
+            this.config = { sections: [] };
+            this.renderSections();
         }
     },
 
-    migrateImageFormat() {
-        if (!this.config.regions) return;
-        this.config.regions.forEach(region => {
-            if (region.images) {
-                region.images = region.images.map(img => {
-                    if (typeof img === 'string') {
-                        return { url: img, compressed: false };
-                    }
-                    return img;
-                });
-            }
-        });
-    },
-
-    getImageUrl(img) {
-        return typeof img === 'string' ? img : img.url;
-    },
-
-    renderRegions() {
-        const list = document.getElementById('region-list');
+    renderSections() {
+        const list = document.getElementById('section-list');
         list.innerHTML = '';
 
-        if (!this.config.regions || this.config.regions.length === 0) {
-            list.innerHTML = '<li style="text-align: center; color: #666; padding: 20px;">暂无相册</li>';
+        if (!this.config.sections || this.config.sections.length === 0) {
+            list.innerHTML = '<li style="text-align: center; color: rgba(255,255,255,0.25); padding: 20px;">暂无板块</li>';
             return;
         }
 
-        this.config.regions.forEach(region => {
+        this.config.sections.forEach(section => {
             const li = document.createElement('li');
-            li.className = 'region-item';
-            const imageCount = region.images ? region.images.length : 0;
-            const compressedCount = region.images ? region.images.filter(img => img.compressed).length : 0;
+            li.className = 'section-item';
+            const albumCount = section.albums ? section.albums.length : 0;
+            const hasCoords = section.mapX && section.mapY;
             li.innerHTML = `
-                <div class="region-info">
-                    <div class="region-name">${region.name} ${region.protected ? '🔒' : ''}</div>
-                    <div class="region-meta">${imageCount} 张照片${compressedCount > 0 ? ` · ${compressedCount} 张已压缩` : ''}</div>
+                <div class="section-info">
+                    <div class="section-name">${section.name} ${hasCoords ? '📍' : ''}</div>
+                    <div class="section-meta">${albumCount} 个相册${hasCoords ? ` · 坐标(${section.mapX},${section.mapY})` : ''}</div>
                 </div>
-                <div class="region-actions">
-                    <button class="btn btn-primary btn-sm" onclick="Admin.editRegion('${region.id}')">编辑</button>
-                    <button class="btn btn-primary btn-sm" onclick="Admin.manageImages('${region.id}')">图片</button>
-                    <button class="btn btn-danger btn-sm" onclick="Admin.deleteRegion('${region.id}')">删除</button>
+                <div class="section-actions">
+                    <button class="btn btn-primary btn-sm" onclick="Admin.editSection('${section.id}')">编辑</button>
+                    <button class="btn btn-primary btn-sm" onclick="Admin.manageAlbums('${section.id}')">相册</button>
+                    <button class="btn btn-danger btn-sm" onclick="Admin.deleteSection('${section.id}')">删除</button>
                 </div>
             `;
             list.appendChild(li);
         });
     },
 
-    showAddRegionForm() {
-        const name = prompt('请输入相册名称:');
+    showAddSectionForm() {
+        const name = prompt('请输入板块名称:');
         if (!name) return;
 
-        const protect = confirm('是否设置为加密相册？');
-        let passwordHash = null;
-
-        if (protect) {
-            const password = prompt('请设置访问密码:');
-            if (!password) return;
-            passwordHash = CryptoUtils.sha256(password);
-        }
-
-        this.createRegion(name, protect, passwordHash);
-    },
-
-    async createRegion(name, isProtected, passwordHash) {
-        const id = 'region-' + Date.now();
-        const newRegion = {
-            id: id,
-            name: name,
-            cover: null,
-            images: [],
-            protected: isProtected
-        };
-
-        if (isProtected && passwordHash) {
-            newRegion.passwordHash = await passwordHash;
-        }
-
-        this.config.regions.push(newRegion);
-        const success = await this.saveConfigToGitHub();
-        if (success) {
-            this.renderRegions();
-            this.showMessage(`相册"${name}"创建成功`, 'success');
-        } else {
-            this.config.regions.pop();
-            this.showMessage('创建失败，请检查网络和 Token 权限', 'error');
-        }
-    },
-
-    async editRegion(regionId) {
-        const region = this.config.regions.find(r => r.id === regionId);
-        if (!region) return;
-
-        const newName = prompt('请输入新的相册名称:', region.name);
-        if (!newName) return;
-
-        const currentCoords = (region.mapX && region.mapY) ? `${region.mapX},${region.mapY}` : '';
-        const coordsInput = prompt('设置地图坐标 (X,Y 百分比 0-100，如 60,40):', currentCoords);
-        
-        let mapX = region.mapX || 0;
-        let mapY = region.mapY || 0;
-        
+        const coordsInput = prompt('设置地图坐标 (X,Y 百分比 0-100，如 60,40):', '');
+        let mapX = 0, mapY = 0;
         if (coordsInput && coordsInput.includes(',')) {
             const parts = coordsInput.split(',').map(s => parseFloat(s.trim()));
             if (!isNaN(parts[0]) && !isNaN(parts[1])) {
@@ -162,220 +96,292 @@ const Admin = {
             }
         }
 
-        const oldName = region.name;
-        const oldMapX = region.mapX;
-        const oldMapY = region.mapY;
-        
-        region.name = newName;
-        region.mapX = mapX;
-        region.mapY = mapY;
-        
+        this.createSection(name, mapX, mapY);
+    },
+
+    async createSection(name, mapX, mapY) {
+        const id = 'section-' + Date.now();
+        const newSection = {
+            id: id,
+            name: name,
+            mapX: mapX,
+            mapY: mapY,
+            albums: []
+        };
+
+        this.config.sections.push(newSection);
         const success = await this.saveConfigToGitHub();
         if (success) {
-            this.renderRegions();
-            this.showMessage('相册信息已更新', 'success');
+            this.renderSections();
+            this.showMessage(`板块"${name}"创建成功`, 'success');
         } else {
-            region.name = oldName;
-            region.mapX = oldMapX;
-            region.mapY = oldMapY;
-            this.showMessage('更新失败，请检查网络和 Token 权限', 'error');
+            this.config.sections.pop();
+            this.showMessage('创建失败，请检查网络和 Token 权限', 'error');
         }
     },
 
-    async deleteRegion(regionId) {
-        if (!confirm('确定要删除这个相册吗？此操作不可撤销。')) return;
+    async editSection(sectionId) {
+        const section = this.config.sections.find(s => s.id === sectionId);
+        if (!section) return;
 
-        const deletedRegion = this.config.regions.find(r => r.id === regionId);
-        this.config.regions = this.config.regions.filter(r => r.id !== regionId);
+        const newName = prompt('请输入板块名称:', section.name);
+        if (!newName) return;
+
+        const currentCoords = (section.mapX && section.mapY) ? `${section.mapX},${section.mapY}` : '';
+        const coordsInput = prompt('设置地图坐标 (X,Y 百分比 0-100):', currentCoords);
+
+        let mapX = section.mapX || 0;
+        let mapY = section.mapY || 0;
+
+        if (coordsInput && coordsInput.includes(',')) {
+            const parts = coordsInput.split(',').map(s => parseFloat(s.trim()));
+            if (!isNaN(parts[0]) && !isNaN(parts[1])) {
+                mapX = Math.max(0, Math.min(100, parts[0]));
+                mapY = Math.max(0, Math.min(100, parts[1]));
+            }
+        }
+
+        const oldName = section.name;
+        const oldMapX = section.mapX;
+        const oldMapY = section.mapY;
+
+        section.name = newName;
+        section.mapX = mapX;
+        section.mapY = mapY;
+
         const success = await this.saveConfigToGitHub();
         if (success) {
-            this.renderRegions();
-            this.showMessage('相册已删除', 'success');
+            this.renderSections();
+            this.showMessage('板块信息已更新', 'success');
         } else {
-            this.config.regions.push(deletedRegion);
-            this.showMessage('删除失败，请检查网络和 Token 权限', 'error');
+            section.name = oldName;
+            section.mapX = oldMapX;
+            section.mapY = oldMapY;
+            this.showMessage('更新失败', 'error');
         }
     },
 
-    manageImages(regionId) {
-        this.currentRegionId = regionId;
-        const region = this.config.regions.find(r => r.id === regionId);
-        if (!region) return;
+    async deleteSection(sectionId) {
+        if (!confirm('确定要删除这个板块吗？')) return;
 
-        document.getElementById('current-region-name').textContent = region.name;
-        document.getElementById('image-section').style.display = 'block';
-        this.renderImages();
+        const deleted = this.config.sections.find(s => s.id === sectionId);
+        this.config.sections = this.config.sections.filter(s => s.id !== sectionId);
+        const success = await this.saveConfigToGitHub();
+        if (success) {
+            this.renderSections();
+            this.showMessage('板块已删除', 'success');
+        } else {
+            this.config.sections.push(deleted);
+            this.showMessage('删除失败', 'error');
+        }
     },
 
-    renderImages() {
-        const grid = document.getElementById('image-grid');
-        const region = this.config.regions.find(r => r.id === this.currentRegionId);
+    manageAlbums(sectionId) {
+        this.currentSectionId = sectionId;
+        const section = this.config.sections.find(s => s.id === sectionId);
+        if (!section) return;
 
-        if (!region || !region.images || region.images.length === 0) {
-            grid.innerHTML = '<p style="text-align: center; color: #666; grid-column: 1 / -1;">暂无图片</p>';
+        document.getElementById('current-section-name').textContent = section.name;
+        document.getElementById('album-section').style.display = 'block';
+        document.getElementById('upload-section').style.display = 'block';
+        this.renderAlbums();
+    },
+
+    renderAlbums() {
+        const list = document.getElementById('album-list');
+        const section = this.config.sections.find(s => s.id === this.currentSectionId);
+
+        if (!section || !section.albums || section.albums.length === 0) {
+            list.innerHTML = '<p style="text-align: center; color: rgba(255,255,255,0.25); grid-column: 1 / -1;">暂无相册</p>';
             return;
         }
 
-        grid.innerHTML = region.images.map((img, index) => {
-            const url = this.getImageUrl(img);
-            const thumbUrl = (typeof img === 'object' && img.thumbnail) ? img.thumbnail : url;
-            const compressed = img.compressed;
+        list.innerHTML = section.albums.map((album, index) => {
+            let coverUrl = album.cover || `https://picsum.photos/150/120?random=${index}`;
+            if (coverUrl.includes('raw.githubusercontent.com')) {
+                coverUrl = `https://wsrv.nl/?url=${encodeURIComponent(coverUrl)}&w=200&q=60&output=webp`;
+            }
             return `
-                <div class="image-item">
-                    <img src="${thumbUrl}" alt="图片 ${index + 1}" onerror="this.src='https://picsum.photos/150/120?random=${index}'">
-                    ${compressed ? '<span class="image-badge">已压缩</span>' : ''}
-                    <button class="image-delete" onclick="Admin.deleteImage(${index})">&times;</button>
+                <div class="album-item">
+                    <img src="${coverUrl}" alt="${album.name}" onerror="this.src='https://picsum.photos/150/120?random=${index}'">
+                    <div class="album-item-name">${album.name}</div>
+                    <div class="album-item-count">${album.images ? album.images.length : 0} 张</div>
+                    <button class="album-edit-btn" onclick="Admin.editAlbum('${album.id}')">编辑</button>
+                    <button class="album-delete-btn" onclick="Admin.deleteAlbum('${album.id}')">&times;</button>
                 </div>
             `;
         }).join('');
     },
 
-    async handleFileUpload(files) {
-        const region = this.config.regions.find(r => r.id === this.currentRegionId);
-        if (!region) return;
+    showAddAlbumForm() {
+        const name = prompt('请输入相册名称:');
+        if (!name) return;
 
+        this.createAlbum(name);
+    },
+
+    async createAlbum(name) {
+        const section = this.config.sections.find(s => s.id === this.currentSectionId);
+        if (!section) return;
+
+        const id = 'album-' + Date.now();
+        const newAlbum = {
+            id: id,
+            name: name,
+            cover: null,
+            images: []
+        };
+
+        if (!section.albums) section.albums = [];
+        section.albums.push(newAlbum);
+
+        const success = await this.saveConfigToGitHub();
+        if (success) {
+            this.renderAlbums();
+            this.showMessage(`相册"${name}"创建成功`, 'success');
+        } else {
+            section.albums.pop();
+            this.showMessage('创建失败', 'error');
+        }
+    },
+
+    async editAlbum(albumId) {
+        const section = this.config.sections.find(s => s.id === this.currentSectionId);
+        if (!section) return;
+
+        const album = section.albums.find(a => a.id === albumId);
+        if (!album) return;
+
+        const newName = prompt('请输入相册名称:', album.name);
+        if (!newName) return;
+
+        const oldName = album.name;
+        album.name = newName;
+
+        const success = await this.saveConfigToGitHub();
+        if (success) {
+            this.renderAlbums();
+            this.showMessage('相册名称已更新', 'success');
+        } else {
+            album.name = oldName;
+            this.showMessage('更新失败', 'error');
+        }
+    },
+
+    async deleteAlbum(albumId) {
+        if (!confirm('确定要删除这个相册吗？')) return;
+
+        const section = this.config.sections.find(s => s.id === this.currentSectionId);
+        if (!section) return;
+
+        const deleted = section.albums.find(a => a.id === albumId);
+        section.albums = section.albums.filter(a => a.id !== albumId);
+
+        const success = await this.saveConfigToGitHub();
+        if (success) {
+            this.renderAlbums();
+            this.showMessage('相册已删除', 'success');
+        } else {
+            section.albums.push(deleted);
+            this.showMessage('删除失败', 'error');
+        }
+    },
+
+    uploadImages() {
+        const fileInput = document.getElementById('album-file-input');
+        if (!fileInput || !fileInput.files.length) return;
+
+        const section = this.config.sections.find(s => s.id === this.currentSectionId);
+        if (!section) return;
+
+        const albumId = prompt('请输入要添加到的相册ID（或留空创建新相册）:');
+        let album;
+
+        if (albumId) {
+            album = section.albums.find(a => a.id === albumId);
+        }
+
+        if (!album) {
+            const albumName = prompt('请输入相册名称:', '新相册');
+            if (!albumName) return;
+
+            album = {
+                id: 'album-' + Date.now(),
+                name: albumName,
+                cover: null,
+                images: []
+            };
+            section.albums.push(album);
+        }
+
+        this.handleFileUpload(fileInput.files, album);
+    },
+
+    async handleFileUpload(files, album) {
         this.showLoading();
 
-        const maxSize = 50 * 1024 * 1024;
         let uploadedCount = 0;
-        let failedCount = 0;
-        let compressedCount = 0;
-        const failedFiles = [];
-
         const totalFiles = files.length;
-        let currentFileIndex = 0;
 
         for (const file of files) {
-            currentFileIndex++;
+            if (file.size > 50 * 1024 * 1024) continue;
+
             let uploadFile = file;
             let wasCompressed = false;
-            const fileSizeMB = file.size / 1024 / 1024;
 
-            if (file.size > maxSize) {
-                failedCount++;
-                failedFiles.push(`${file.name} (文件过大: ${fileSizeMB.toFixed(1)}MB)`);
-                continue;
-            }
-
-            if (fileSizeMB > 30 && file.type.startsWith('image/')) {
+            if (file.size > 30 * 1024 * 1024 && file.type.startsWith('image/')) {
                 try {
-                    this.updateLoading(`正在压缩 (${currentFileIndex}/${totalFiles})`, `${file.name} ${fileSizeMB.toFixed(1)}MB`, false);
+                    this.updateLoading(`正在压缩 (${uploadedCount + 1}/${totalFiles})`, file.name);
                     uploadFile = await ImageCompressor.compress(file, 30, 0.85);
                     wasCompressed = true;
-                    compressedCount++;
-                } catch (error) {
-                    console.error('压缩失败:', error);
-                }
+                } catch (e) {}
             }
 
             let thumbFile = null;
             try {
-                this.updateLoading(`正在生成缩略图 (${currentFileIndex}/${totalFiles})`, file.name, false);
+                this.updateLoading(`生成缩略图 (${uploadedCount + 1}/${totalFiles})`, file.name);
                 thumbFile = await ImageCompressor.generateThumbnail(file, 800, 0.6);
-            } catch (error) {
-                console.error('缩略图生成失败:', error);
-            }
+            } catch (e) {}
 
             const timestamp = Date.now();
-            const mainPath = `images/${this.currentRegionId}/${timestamp}-${file.name}`;
-            const thumbPath = `images/${this.currentRegionId}/${timestamp}-thumb-${file.name.replace(/\.[^.]+$/, '.jpg')}`;
+            const mainPath = `images/${album.id}/${timestamp}-${file.name}`;
+            const thumbPath = `images/${album.id}/${timestamp}-thumb-${file.name.replace(/\.[^.]+$/, '.jpg')}`;
 
-            const mainSize = uploadFile.size;
-            const thumbSize = thumbFile ? thumbFile.size : 0;
-
-            this.updateLoading(`正在上传 (${currentFileIndex}/${totalFiles})`, file.name, true);
-            this.updateProgress(0);
-
+            this.updateLoading(`上传中 (${uploadedCount + 1}/${totalFiles})`, file.name);
             const url = await GitHubAPI.uploadImage(mainPath, uploadFile, (loaded, total) => {
-                const fraction = loaded / total;
-                const percent = Math.min(Math.floor(fraction * 95), 95);
+                const percent = Math.min(Math.floor((loaded / total) * 95), 95);
                 this.updateProgress(percent);
                 this.updateLoadingDetail(`${this.formatSize(loaded)} / ${this.formatSize(total)}`);
             }, (status) => {
                 if (status === 'waiting') this.updateLoadingDetail('等待服务器确认...');
-                if (status === 'timeout') this.updateLoadingDetail('确认超时');
             });
 
             let thumbUrl = null;
             if (thumbFile) {
-                this.updateLoading(`正在上传缩略图 (${currentFileIndex}/${totalFiles})`, file.name, true);
-                thumbUrl = await GitHubAPI.uploadImage(thumbPath, thumbFile, (loaded, total) => {
-                    const fraction = loaded / total;
-                    const percent = Math.min(95 + Math.floor(fraction * 5), 100);
-                    this.updateProgress(percent);
-                    this.updateLoadingDetail(`${this.formatSize(loaded)} / ${this.formatSize(total)}`);
-                }, (status) => {
-                    if (status === 'waiting') this.updateLoadingDetail('等待服务器确认...');
-                    if (status === 'timeout') this.updateLoadingDetail('确认超时');
-                });
-            } else {
-                this.updateProgress(100);
+                thumbUrl = await GitHubAPI.uploadImage(thumbPath, thumbFile);
             }
 
             if (url) {
-                if (!region.images) region.images = [];
-                region.images.push({
+                if (!album.images) album.images = [];
+                album.images.push({
                     url: url,
                     thumbnail: thumbUrl || url,
                     compressed: wasCompressed
                 });
 
-                if (!region.cover) {
-                    region.cover = thumbUrl || url;
+                if (!album.cover) {
+                    album.cover = thumbUrl || url;
                 }
                 uploadedCount++;
 
-                this.updateLoading(`正在保存配置 (${currentFileIndex}/${totalFiles})`, file.name, false);
+                this.updateLoading(`保存配置 (${uploadedCount}/${totalFiles})`, file.name);
                 await this.saveConfigToGitHub();
-                this.renderImages();
-                this.renderRegions();
-            } else {
-                failedCount++;
-                failedFiles.push(file.name);
             }
         }
 
+        this.renderAlbums();
         this.hideLoading();
-
-        if (uploadedCount > 0) {
-            let message = `${uploadedCount} 张图片上传成功`;
-            if (compressedCount > 0) {
-                message += `（${compressedCount} 张已压缩）`;
-            }
-            if (failedCount > 0) {
-                message += `，${failedCount} 张失败`;
-                if (failedFiles.length > 0) {
-                    message += `: ${failedFiles.join(', ')}`;
-                }
-            }
-            this.showMessage(message, failedCount > 0 ? 'error' : 'success');
-        } else {
-            this.showMessage(`图片上传失败: ${failedFiles.join(', ')}`, 'error');
-        }
-    },
-
-    async deleteImage(index) {
-        if (!confirm('确定要删除这张图片吗？')) return;
-
-        const region = this.config.regions.find(r => r.id === this.currentRegionId);
-        if (!region) return;
-
-        const deletedImage = region.images[index];
-        region.images.splice(index, 1);
-
-        if (region.cover && !region.images.some(img => this.getImageUrl(img) === region.cover)) {
-            region.cover = region.images[0] ? this.getImageUrl(region.images[0]) : null;
-        }
-
-        const success = await this.saveConfigToGitHub();
-        if (success) {
-            this.renderImages();
-            this.renderRegions();
-            this.showMessage('图片已删除', 'success');
-        } else {
-            region.images.splice(index, 0, deletedImage);
-            this.showMessage('删除失败，请检查网络和 Token 权限', 'error');
-        }
+        this.showMessage(`${uploadedCount} 张图片上传成功`, 'success');
     },
 
     async saveConfigToGitHub() {
@@ -398,29 +404,20 @@ const Admin = {
         message.textContent = text;
         message.className = `message ${type}`;
         message.style.display = 'block';
-
-        setTimeout(() => {
-            message.style.display = 'none';
-        }, 5000);
+        setTimeout(() => { message.style.display = 'none'; }, 5000);
     },
 
     showLoading() {
         document.getElementById('loading-overlay').classList.add('active');
-        document.getElementById('loading-status').textContent = '处理中...';
-        document.getElementById('loading-detail').textContent = '';
-        this.hideProgress();
     },
 
     hideLoading() {
         document.getElementById('loading-overlay').classList.remove('active');
     },
 
-    updateLoading(status, detail, showProgress) {
+    updateLoading(status, detail) {
         document.getElementById('loading-status').textContent = status;
         document.getElementById('loading-detail').textContent = detail || '';
-        if (showProgress) {
-            document.getElementById('progress-wrapper').style.display = 'block';
-        }
     },
 
     updateLoadingDetail(detail) {
@@ -433,12 +430,6 @@ const Admin = {
         document.getElementById('progress-text').textContent = percent + '%';
     },
 
-    hideProgress() {
-        document.getElementById('progress-wrapper').style.display = 'none';
-        document.getElementById('progress-fill').style.width = '0%';
-        document.getElementById('progress-text').textContent = '0%';
-    },
-
     formatSize(bytes) {
         if (bytes < 1024) return bytes + ' B';
         if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
@@ -447,36 +438,9 @@ const Admin = {
 
     setupEventListeners() {
         document.getElementById('save-config').addEventListener('click', () => this.saveConfig());
-        document.getElementById('add-region').addEventListener('click', () => this.showAddRegionForm());
-
-        const uploadArea = document.getElementById('upload-area');
-        const fileInput = document.getElementById('file-input');
-
-        uploadArea.addEventListener('click', () => fileInput.click());
-
-        uploadArea.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            uploadArea.style.borderColor = '#3498db';
-        });
-
-        uploadArea.addEventListener('dragleave', () => {
-            uploadArea.style.borderColor = '#ddd';
-        });
-
-        uploadArea.addEventListener('drop', (e) => {
-            e.preventDefault();
-            uploadArea.style.borderColor = '#ddd';
-            if (e.dataTransfer.files.length > 0) {
-                this.handleFileUpload(e.dataTransfer.files);
-            }
-        });
-
-        fileInput.addEventListener('change', (e) => {
-            if (e.target.files.length > 0) {
-                this.handleFileUpload(e.target.files);
-                e.target.value = '';
-            }
-        });
+        document.getElementById('add-section').addEventListener('click', () => this.showAddSectionForm());
+        document.getElementById('add-album').addEventListener('click', () => this.showAddAlbumForm());
+        document.getElementById('upload-images').addEventListener('click', () => this.uploadImages());
     }
 };
 

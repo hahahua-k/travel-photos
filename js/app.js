@@ -1,5 +1,5 @@
 /**
- * 主页逻辑模块 - 地图 + 自动滚动相册
+ * 主页逻辑模块 - 地图 + 流动板块
  */
 const App = {
     config: null,
@@ -11,7 +11,7 @@ const App = {
     lastY: 0,
     autoScrollTimer: null,
     autoScrollPaused: false,
-    activeRegionId: null,
+    activeSectionId: null,
 
     async init() {
         GitHubAPI.init(null, 'hahahua-k', 'travel-photos');
@@ -20,23 +20,23 @@ const App = {
             const { token, owner, repo } = JSON.parse(savedConfig);
             if (token) GitHubAPI.init(token, owner, repo);
         }
-        await this.loadRegions();
+        await this.loadData();
         this.initMapDrag();
         this.initAutoScroll();
         this.setupEventListeners();
     },
 
-    async loadRegions() {
+    async loadData() {
         const loading = document.getElementById('loading');
         try {
             this.config = await GitHubAPI.getConfig();
             if (loading) loading.style.display = 'none';
             this.renderMarkers();
-            this.renderAlbums();
+            this.renderSections();
         } catch (error) {
             console.error('加载数据失败:', error);
             if (loading) loading.style.display = 'none';
-            this.config = { regions: [] };
+            this.config = { sections: [] };
         }
     },
 
@@ -50,87 +50,100 @@ const App = {
         if (!container) return;
         container.innerHTML = '';
 
-        if (!this.config || !this.config.regions) return;
+        if (!this.config || !this.config.sections) return;
 
-        this.config.regions.forEach((region, index) => {
-            if (!region.mapX || !region.mapY) return;
+        this.config.sections.forEach(section => {
+            if (!section.mapX || !section.mapY) return;
 
             const marker = document.createElement('div');
             marker.className = 'map-marker';
-            marker.dataset.regionId = region.id;
-            marker.style.left = region.mapX + '%';
-            marker.style.top = region.mapY + '%';
+            marker.dataset.sectionId = section.id;
+            marker.style.left = section.mapX + '%';
+            marker.style.top = section.mapY + '%';
 
             marker.innerHTML = `
                 <div class="map-marker-pulse"></div>
                 <div class="map-marker-dot"></div>
-                <div class="map-marker-label">${region.name}</div>
+                <div class="map-marker-label">${section.name}</div>
             `;
 
             marker.addEventListener('click', (e) => {
                 e.stopPropagation();
-                this.focusRegion(region.id);
+                this.focusSection(section.id);
             });
 
             container.appendChild(marker);
         });
     },
 
-    renderAlbums() {
+    renderSections() {
         const track = document.getElementById('albums-track');
         if (!track) return;
         track.innerHTML = '';
 
-        if (!this.config || !this.config.regions || this.config.regions.length === 0) {
-            track.innerHTML = '<p class="empty-hint">暂无相册，请在管理页面添加</p>';
+        if (!this.config || !this.config.sections || this.config.sections.length === 0) {
+            track.innerHTML = '<p class="empty-hint">暂无板块，请在管理页面添加</p>';
             return;
         }
 
-        this.config.regions.forEach((region, index) => {
-            const imageCount = region.images ? region.images.length : 0;
-            let coverUrl = region.cover || `https://picsum.photos/640/400?random=${index}`;
+        this.config.sections.forEach((section, index) => {
+            const albumCount = section.albums ? section.albums.length : 0;
+            let totalImages = 0;
+            if (section.albums) {
+                section.albums.forEach(album => {
+                    totalImages += album.images ? album.images.length : 0;
+                });
+            }
+
+            let coverUrl = '';
+            if (section.albums && section.albums.length > 0 && section.albums[0].cover) {
+                coverUrl = section.albums[0].cover;
+            }
+            if (!coverUrl) {
+                coverUrl = `https://picsum.photos/640/400?random=${index}`;
+            }
             if (coverUrl.includes('raw.githubusercontent.com')) {
                 coverUrl = `https://wsrv.nl/?url=${encodeURIComponent(coverUrl)}&w=800&q=70&output=webp`;
             }
 
             const card = document.createElement('div');
             card.className = 'album-card';
-            card.dataset.regionId = region.id;
+            card.dataset.sectionId = section.id;
 
             card.innerHTML = `
                 <div class="album-card-cover">
-                    <img src="${coverUrl}" alt="${region.name}" loading="lazy"
+                    <img src="${coverUrl}" alt="${section.name}" loading="lazy"
                          onerror="this.src='https://picsum.photos/640/400?random=${index}'">
                 </div>
                 <div class="album-card-info">
-                    <span class="album-card-tag">相册 ${String(index + 1).padStart(2, '0')}</span>
-                    <h3 class="album-card-title">${region.name}</h3>
-                    <p class="album-card-meta">${imageCount} 张照片</p>
+                    <span class="album-card-tag">板块 ${String(index + 1).padStart(2, '0')}</span>
+                    <h3 class="album-card-title">${section.name}</h3>
+                    <p class="album-card-meta">${albumCount} 个相册 · ${totalImages} 张照片</p>
                 </div>
             `;
 
-            card.addEventListener('click', () => this.handleRegionClick(region));
+            card.addEventListener('click', () => this.handleSectionClick(section));
             track.appendChild(card);
         });
 
-        if (this.config.regions.length > 0) {
-            this.focusRegion(this.config.regions[0].id, false);
+        if (this.config.sections.length > 0) {
+            this.focusSection(this.config.sections[0].id, false);
         }
     },
 
-    focusRegion(regionId, scroll = true) {
-        this.activeRegionId = regionId;
+    focusSection(sectionId, scroll = true) {
+        this.activeSectionId = sectionId;
 
         document.querySelectorAll('.map-marker').forEach(m => {
-            m.classList.toggle('active', m.dataset.regionId === regionId);
+            m.classList.toggle('active', m.dataset.sectionId === sectionId);
         });
 
         document.querySelectorAll('.album-card').forEach(c => {
-            c.classList.toggle('active', c.dataset.regionId === regionId);
+            c.classList.toggle('active', c.dataset.sectionId === sectionId);
         });
 
         if (scroll) {
-            const card = document.querySelector(`.album-card[data-region-id="${regionId}"]`);
+            const card = document.querySelector(`.album-card[data-section-id="${sectionId}"]`);
             if (card) {
                 const track = document.getElementById('albums-track');
                 const trackRect = track.getBoundingClientRect();
@@ -232,13 +245,52 @@ const App = {
         this.autoScrollPaused = false;
     },
 
-    handleRegionClick(region) {
-        if (region.protected) {
-            this.currentRegion = region;
+    handleSectionClick(section) {
+        if (section.protected) {
+            this.currentSection = section;
             this.showPasswordModal();
         } else {
-            window.location.href = `gallery.html?id=${region.id}`;
+            this.showSectionDetail(section);
         }
+    },
+
+    showSectionDetail(section) {
+        const modal = document.getElementById('section-modal');
+        const title = document.getElementById('section-modal-title');
+        const content = document.getElementById('section-modal-content');
+
+        title.textContent = section.name;
+
+        let html = '';
+        if (section.albums && section.albums.length > 0) {
+            section.albums.forEach(album => {
+                let coverUrl = album.cover || 'https://picsum.photos/200/150?random=1';
+                if (coverUrl.includes('raw.githubusercontent.com')) {
+                    coverUrl = `https://wsrv.nl/?url=${encodeURIComponent(coverUrl)}&w=400&q=60&output=webp`;
+                }
+                const imgCount = album.images ? album.images.length : 0;
+                html += `
+                    <div class="section-modal-album" onclick="window.location.href='gallery.html?section=${section.id}&album=${album.id}'">
+                        <img src="${coverUrl}" alt="${album.name}" onerror="this.src='https://picsum.photos/200/150?random=1'">
+                        <div class="section-modal-album-info">
+                            <div class="section-modal-album-name">${album.name}</div>
+                            <div class="section-modal-album-count">${imgCount} 张照片</div>
+                        </div>
+                    </div>
+                `;
+            });
+        } else {
+            html = '<p style="text-align: center; color: rgba(255,255,255,0.3); padding: 40px;">暂无相册</p>';
+        }
+
+        content.innerHTML = html;
+        modal.classList.add('active');
+        this.pauseAutoScroll();
+    },
+
+    hideSectionDetail() {
+        document.getElementById('section-modal').classList.remove('active');
+        this.resumeAutoScroll();
     },
 
     showPasswordModal() {
@@ -253,18 +305,18 @@ const App = {
 
     hidePasswordModal() {
         document.getElementById('password-modal').classList.remove('active');
-        this.currentRegion = null;
+        this.currentSection = null;
     },
 
     async verifyPassword() {
         const input = document.getElementById('password-input');
         const error = document.getElementById('password-error');
-        if (!this.currentRegion) return;
+        if (!this.currentSection) return;
 
-        const isValid = await CryptoUtils.verifyPassword(input.value, this.currentRegion.passwordHash);
+        const isValid = await CryptoUtils.verifyPassword(input.value, this.currentSection.passwordHash);
         if (isValid) {
             this.hidePasswordModal();
-            window.location.href = `gallery.html?id=${this.currentRegion.id}`;
+            this.showSectionDetail(this.currentSection);
         } else {
             error.style.display = 'block';
             input.classList.add('shake');
@@ -273,13 +325,18 @@ const App = {
     },
 
     setupEventListeners() {
-        const modal = document.getElementById('password-modal');
+        const passwordModal = document.getElementById('password-modal');
         const submitBtn = document.getElementById('password-submit');
         const input = document.getElementById('password-input');
 
         submitBtn.addEventListener('click', () => this.verifyPassword());
         input.addEventListener('keypress', (e) => { if (e.key === 'Enter') this.verifyPassword(); });
-        modal.addEventListener('click', (e) => { if (e.target === modal) this.hidePasswordModal(); });
+        passwordModal.addEventListener('click', (e) => { if (e.target === passwordModal) this.hidePasswordModal(); });
+
+        const sectionModal = document.getElementById('section-modal');
+        const sectionClose = document.getElementById('section-modal-close');
+        if (sectionClose) sectionClose.addEventListener('click', () => this.hideSectionDetail());
+        if (sectionModal) sectionModal.addEventListener('click', (e) => { if (e.target === sectionModal) this.hideSectionDetail(); });
     }
 };
 

@@ -406,6 +406,122 @@ header p {
     overflow: hidden;
 }
 
+/* ===== Section Modal ===== */
+.section-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+}
+
+.section-modal.active {
+    display: flex;
+}
+
+.section-modal-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(12px);
+}
+
+.section-modal-container {
+    position: relative;
+    background: rgba(20, 20, 40, 0.95);
+    backdrop-filter: blur(20px);
+    border-radius: 24px;
+    padding: 36px;
+    max-width: 700px;
+    width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
+    border: 1px solid rgba(255,255,255,0.06);
+    box-shadow: 0 30px 80px rgba(0,0,0,0.5);
+    z-index: 1;
+}
+
+.section-modal-close {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.08);
+    color: rgba(255,255,255,0.5);
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.section-modal-close:hover {
+    background: rgba(255,255,255,0.15);
+    color: white;
+}
+
+.section-modal-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: rgba(255,255,255,0.95);
+    margin-bottom: 24px;
+    background: linear-gradient(135deg, #fff, #a8c0ff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.section-modal-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 16px;
+}
+
+.section-modal-album {
+    background: rgba(255,255,255,0.04);
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid rgba(255,255,255,0.06);
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.section-modal-album:hover {
+    transform: translateY(-4px);
+    border-color: rgba(67, 97, 238, 0.3);
+    box-shadow: 0 8px 30px rgba(67, 97, 238, 0.15);
+}
+
+.section-modal-album img {
+    width: 100%;
+    height: 140px;
+    object-fit: cover;
+    display: block;
+}
+
+.section-modal-album-info {
+    padding: 14px 16px;
+}
+
+.section-modal-album-name {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: rgba(255,255,255,0.9);
+    margin-bottom: 4px;
+}
+
+.section-modal-album-count {
+    font-size: 0.78rem;
+    color: rgba(255,255,255,0.3);
+}
+
 .albums-track-wrapper {
     position: relative;
     width: 100%;

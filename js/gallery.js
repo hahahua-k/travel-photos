@@ -9,10 +9,12 @@ const Gallery = {
 
     async init() {
         const urlParams = new URLSearchParams(window.location.search);
+        const sectionId = urlParams.get('section');
+        const albumId = urlParams.get('album');
         const regionId = urlParams.get('id');
 
-        if (!regionId) {
-            this.showError('未指定相册ID');
+        if (!sectionId && !albumId && !regionId) {
+            this.showError('未指定相册');
             return;
         }
 
@@ -25,8 +27,46 @@ const Gallery = {
             const { token, owner, repo } = JSON.parse(savedConfig);
             if (token) GitHubAPI.init(token, owner, repo);
         }
-        await this.loadRegion(regionId);
+
+        if (sectionId && albumId) {
+            await this.loadAlbum(sectionId, albumId);
+        } else if (regionId) {
+            await this.loadRegion(regionId);
+        }
+
         this.setupEventListeners();
+    },
+
+    async loadAlbum(sectionId, albumId) {
+        const loading = document.getElementById('loading');
+        try {
+            this.config = await GitHubAPI.getConfig();
+            
+            let album = null;
+            if (this.config.sections) {
+                const section = this.config.sections.find(s => s.id === sectionId);
+                if (section && section.albums) {
+                    album = section.albums.find(a => a.id === albumId);
+                }
+            }
+
+            if (!album) {
+                this.showError('未找到指定相册');
+                return;
+            }
+
+            this.region = album;
+            document.title = `${album.name} - 旅行相册`;
+            document.getElementById('region-title').textContent = album.name;
+            const count = album.images ? album.images.length : 0;
+            document.getElementById('region-count').textContent = `${count} 张照片`;
+            loading.style.display = 'none';
+            this.renderImages();
+        } catch (error) {
+            console.error('加载数据失败:', error);
+            loading.style.display = 'none';
+            this.showError('加载数据失败');
+        }
     },
 
     getImageUrl(img, mode) {
