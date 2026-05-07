@@ -199,6 +199,35 @@ const App = {
         let lastX = 0;
         let lastTime = 0;
         let rafId = null;
+        let autoScrollPaused = false;
+        let autoDirection = 1;
+        let autoSpeed = 0.6;
+
+        // 自动流动
+        const autoScroll = () => {
+            if (isDown || autoScrollPaused) {
+                requestAnimationFrame(autoScroll);
+                return;
+            }
+
+            track.scrollLeft += autoSpeed * autoDirection;
+
+            if (track.scrollLeft >= track.scrollWidth - track.clientWidth - 2) {
+                autoDirection = -1;
+            } else if (track.scrollLeft <= 2) {
+                autoDirection = 1;
+            }
+
+            requestAnimationFrame(autoScroll);
+        };
+
+        // 暂停自动滚动
+        const pauseAuto = (duration) => {
+            autoScrollPaused = true;
+            if (duration) {
+                setTimeout(() => { autoScrollPaused = false; }, duration);
+            }
+        };
 
         const onStart = (x) => {
             isDown = true;
@@ -213,7 +242,6 @@ const App = {
 
         const onMove = (x) => {
             if (!isDown) return;
-            const walk = (x - startX - track.offsetLeft + scrollLeft);
             track.scrollLeft = scrollLeft - (x - startX);
 
             const now = Date.now();
@@ -228,9 +256,15 @@ const App = {
         const onEnd = () => {
             isDown = false;
             track.style.cursor = 'grab';
+
+            // 惯性滚动
             let v = velocity * 200;
             const decay = () => {
-                if (Math.abs(v) < 0.5) return;
+                if (Math.abs(v) < 0.5) {
+                    // 惯性结束后恢复自动滚动
+                    setTimeout(() => { autoScrollPaused = false; }, 1500);
+                    return;
+                }
                 track.scrollLeft -= v;
                 v *= 0.94;
                 rafId = requestAnimationFrame(decay);
@@ -238,13 +272,20 @@ const App = {
             decay();
         };
 
-        track.addEventListener('mousedown', (e) => onStart(e.pageX));
+        track.addEventListener('mousedown', (e) => { onStart(e.pageX); pauseAuto(); });
         window.addEventListener('mousemove', (e) => onMove(e.pageX));
         window.addEventListener('mouseup', onEnd);
 
-        track.addEventListener('touchstart', (e) => onStart(e.touches[0].pageX), { passive: true });
+        track.addEventListener('touchstart', (e) => { onStart(e.touches[0].pageX); pauseAuto(); }, { passive: true });
         track.addEventListener('touchmove', (e) => onMove(e.touches[0].pageX), { passive: true });
-        track.addEventListener('touchend', onEnd);
+        track.addEventListener('touchend', () => { onEnd(); pauseAuto(2000); });
+
+        // 鼠标悬停暂停
+        track.addEventListener('mouseenter', () => { autoScrollPaused = true; });
+        track.addEventListener('mouseleave', () => { autoScrollPaused = false; });
+
+        // 启动自动流动
+        requestAnimationFrame(autoScroll);
     },
 
     focusSection(sectionId, scroll = true) {
