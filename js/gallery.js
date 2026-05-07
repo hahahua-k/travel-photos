@@ -74,10 +74,10 @@ const Gallery = {
         if (!url) return url;
         if (mode === 'thumbnail' && url.includes('raw.githubusercontent.com')) {
             const thumb = (typeof img === 'object' && img.thumbnail) ? img.thumbnail : url;
-            return `https://wsrv.nl/?url=${encodeURIComponent(thumb)}&w=600&q=60&output=webp`;
+            return `https://wsrv.nl/?url=${encodeURIComponent(thumb)}&w=500&q=55&output=webp&fit=cover`;
         }
         if (mode === 'full' && url.includes('raw.githubusercontent.com')) {
-            return `https://wsrv.nl/?url=${encodeURIComponent(url)}&w=2000&q=85`;
+            return `https://wsrv.nl/?url=${encodeURIComponent(url)}&w=1600&q=80&output=webp`;
         }
         return url;
     },

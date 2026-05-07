@@ -115,9 +115,9 @@ const App = {
             let albumsHtml = '';
             if (section.albums && section.albums.length > 0) {
                 section.albums.forEach((album, aIndex) => {
-                    let coverUrl = album.cover || `https://picsum.photos/100/100?random=${aIndex}`;
+                    let coverUrl = album.cover || `https://picsum.photos/300/200?random=${aIndex}`;
                     if (coverUrl.includes('raw.githubusercontent.com')) {
-                        coverUrl = `https://wsrv.nl/?url=${encodeURIComponent(coverUrl)}&w=120&q=50&output=webp`;
+                        coverUrl = `https://wsrv.nl/?url=${encodeURIComponent(coverUrl)}&w=300&q=55&output=webp&fit=cover`;
                     }
                     const imgCount = album.images ? album.images.length : 0;
 
@@ -201,6 +201,44 @@ const App = {
         let rafId = null;
         let autoScrollPaused = false;
         let autoSpeed = 0.42;
+        let originalWidth = 0;
+
+        // 克隆内容实现无缝循环
+        const setupSeamless = () => {
+            const items = track.querySelectorAll('.section-block');
+            if (items.length === 0) return;
+
+            // 计算原始内容总宽度
+            const gap = 28;
+            originalWidth = 0;
+            items.forEach(item => {
+                originalWidth += item.offsetWidth + gap;
+            });
+
+            // 克隆所有板块追加到末尾
+            items.forEach(item => {
+                const clone = item.cloneNode(true);
+                clone.classList.add('clone');
+                // 给克隆的相册绑定点击事件
+                clone.querySelectorAll('.album-row').forEach(el => {
+                    el.addEventListener('click', () => {
+                        window.location.href = `gallery.html?section=${el.dataset.sectionId}&album=${el.dataset.albumId}`;
+                    });
+                });
+                clone.querySelector('.section-header').addEventListener('click', () => {
+                    const sectionId = clone.dataset.sectionId;
+                    document.querySelectorAll('.map-marker').forEach(m => {
+                        m.classList.toggle('active', m.dataset.sectionId === sectionId);
+                    });
+                });
+                track.appendChild(clone);
+            });
+        };
+
+        // 等DOM渲染完再初始化
+        requestAnimationFrame(() => {
+            setupSeamless();
+        });
 
         const autoScroll = () => {
             if (isDown || autoScrollPaused) {
@@ -210,9 +248,9 @@ const App = {
 
             track.scrollLeft += autoSpeed;
 
-            // 到达末尾时无缝跳回开头
-            if (track.scrollLeft >= track.scrollWidth - track.clientWidth - 1) {
-                track.scrollLeft = 0;
+            // 到达克隆区域时无缝跳回
+            if (originalWidth > 0 && track.scrollLeft >= originalWidth) {
+                track.scrollLeft = track.scrollLeft - originalWidth;
             }
 
             requestAnimationFrame(autoScroll);
@@ -229,7 +267,6 @@ const App = {
             setTimeout(() => { autoScrollPaused = false; }, delay || 3000);
         };
 
-        // 暴露给外部调用（地图标记点击用）
         track._pauseAuto = pauseAuto;
         track._resumeAuto = resumeAuto;
 
@@ -241,7 +278,6 @@ const App = {
             lastX = x;
             lastTime = Date.now();
             velocity = 0;
-            if (rafId) cancelAnimationFrame(rafId);
         };
 
         const onMove = (x) => {
@@ -261,14 +297,20 @@ const App = {
             isDown = false;
             track.style.cursor = 'grab';
 
-            let v = velocity * 180;
+            let v = velocity * 150;
             const decay = () => {
-                if (Math.abs(v) < 0.5) {
-                    resumeAuto(2000);
+                if (Math.abs(v) < 0.3) {
+                    resumeAuto(1500);
                     return;
                 }
                 track.scrollLeft -= v;
-                v *= 0.94;
+
+                // 惯性时也要检查无缝循环
+                if (originalWidth > 0 && track.scrollLeft >= originalWidth) {
+                    track.scrollLeft = track.scrollLeft - originalWidth;
+                }
+
+                v *= 0.95;
                 rafId = requestAnimationFrame(decay);
             };
             decay();
@@ -280,7 +322,7 @@ const App = {
 
         track.addEventListener('touchstart', (e) => { onStart(e.touches[0].pageX); pauseAuto(); }, { passive: true });
         track.addEventListener('touchmove', (e) => onMove(e.touches[0].pageX), { passive: true });
-        track.addEventListener('touchend', () => { onEnd(); resumeAuto(2000); });
+        track.addEventListener('touchend', () => { onEnd(); });
 
         track.addEventListener('mouseenter', () => { autoScrollPaused = true; });
         track.addEventListener('mouseleave', () => { autoScrollPaused = false; });
@@ -294,10 +336,9 @@ const App = {
         });
 
         if (scroll) {
-            const block = document.querySelector(`.section-block[data-section-id="${sectionId}"]`);
+            const block = document.querySelector(`.section-block[data-section-id="${sectionId}"]:not(.clone)`);
             const track = document.getElementById('sections-track');
             if (block && track) {
-                // 暂停自动滚动
                 if (track._pauseAuto) track._pauseAuto();
 
                 const trackRect = track.getBoundingClientRect();
@@ -309,7 +350,6 @@ const App = {
                     behavior: 'smooth'
                 });
 
-                // 4秒后恢复自动滚动
                 if (track._resumeAuto) track._resumeAuto(4000);
             }
         }
