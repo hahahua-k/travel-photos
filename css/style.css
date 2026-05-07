@@ -749,6 +749,8 @@ header p {
     align-items: center;
     justify-content: center;
     z-index: 1;
+    min-width: 200px;
+    min-height: 200px;
 }
 
 .lightbox-image-wrapper {
@@ -781,21 +783,22 @@ header p {
 }
 
 .lightbox-close {
-    position: absolute;
-    top: -52px;
-    right: 0;
+    position: fixed;
+    top: 20px;
+    right: 20px;
     color: rgba(255,255,255,0.5);
     cursor: pointer;
     background: rgba(255, 255, 255, 0.05);
     border: 1px solid rgba(255,255,255,0.08);
-    width: 40px;
-    height: 40px;
+    width: 44px;
+    height: 44px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     transition: var(--transition);
     backdrop-filter: blur(8px);
+    z-index: 10;
 }
 
 .lightbox-close:hover {
@@ -805,7 +808,7 @@ header p {
 }
 
 .lightbox-nav {
-    position: absolute;
+    position: fixed;
     top: 50%;
     transform: translateY(-50%);
     background: rgba(255, 255, 255, 0.05);
@@ -821,6 +824,7 @@ header p {
     display: flex;
     align-items: center;
     justify-content: center;
+    z-index: 10;
 }
 
 .lightbox-nav:hover {
@@ -830,18 +834,19 @@ header p {
 }
 
 .lightbox-prev {
-    left: -70px;
+    left: 20px;
 }
 
 .lightbox-next {
-    right: -70px;
+    right: 20px;
 }
 
 .lightbox-info {
-    position: absolute;
-    bottom: -52px;
+    position: fixed;
+    bottom: 24px;
     left: 50%;
     transform: translateX(-50%);
+    z-index: 10;
 }
 
 .lightbox-counter {
@@ -1049,21 +1054,23 @@ footer::before {
     }
 
     .lightbox-prev {
-        left: 12px;
+        left: 10px;
     }
 
     .lightbox-next {
-        right: 12px;
+        right: 10px;
     }
 
     .lightbox-nav {
-        width: 42px;
-        height: 42px;
+        width: 44px;
+        height: 44px;
     }
 
     .lightbox-close {
-        top: -44px;
-        right: 4px;
+        top: 14px;
+        right: 14px;
+        width: 40px;
+        height: 40px;
     }
 }
 
