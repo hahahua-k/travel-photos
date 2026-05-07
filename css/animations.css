@@ -18,49 +18,46 @@ body {
 /* ===== 首页栏目滚动动画 ===== */
 .album-row .album-cover {
     opacity: 0;
-    transform: translateX(-60px) scale(0.95);
-    transition: opacity 0.8s var(--ease-out-expo),
-                transform 0.8s var(--ease-out-expo);
+    transform: translateY(50px) scale(0.96);
+    transition: opacity 0.7s var(--ease-out-expo),
+                transform 0.7s var(--ease-out-expo);
 }
 
 .album-row .album-info {
     opacity: 0;
-    transform: translateX(60px);
-    transition: opacity 0.8s var(--ease-out-expo) 0.15s,
-                transform 0.8s var(--ease-out-expo) 0.15s;
-}
-
-.album-row-inner.reverse .album-cover {
-    transform: translateX(60px) scale(0.95);
-}
-
-.album-row-inner.reverse .album-info {
-    transform: translateX(-60px);
+    transform: translateY(40px);
+    transition: opacity 0.7s var(--ease-out-expo) 0.1s,
+                transform 0.7s var(--ease-out-expo) 0.1s;
 }
 
 /* 可见状态 */
 .album-row.visible .album-cover {
     opacity: 1;
-    transform: translateX(0) scale(1);
+    transform: translateY(0) scale(1);
 }
 
 .album-row.visible .album-info {
     opacity: 1;
-    transform: translateX(0);
+    transform: translateY(0);
 }
 
-/* 第二行开始每行递增延迟 */
-.album-row:nth-child(2) .album-cover { transition-delay: 0s; }
-.album-row:nth-child(2) .album-info { transition-delay: 0.15s; }
-.album-row:nth-child(3) .album-cover { transition-delay: 0s; }
-.album-row:nth-child(3) .album-info { transition-delay: 0.15s; }
+/* 退出动画稍快 */
+.album-row:not(.visible) .album-cover {
+    transition-duration: 0.4s;
+    transition-delay: 0.05s;
+}
+
+.album-row:not(.visible) .album-info {
+    transition-duration: 0.35s;
+    transition-delay: 0s;
+}
 
 /* ===== 画廊滚动动画 ===== */
 .gallery-item {
     opacity: 0;
-    transform: translateY(40px) scale(0.96);
-    transition: opacity 0.6s var(--ease-out-expo),
-                transform 0.6s var(--ease-out-expo);
+    transform: translateY(30px) scale(0.97);
+    transition: opacity 0.5s var(--ease-out-expo),
+                transform 0.5s var(--ease-out-expo);
 }
 
 .gallery-item.visible {
@@ -68,13 +65,21 @@ body {
     transform: translateY(0) scale(1);
 }
 
+/* 退出更快 */
+.gallery-item:not(.visible) {
+    transition-duration: 0.3s;
+}
+
 /* 交错延迟 */
 .gallery-item:nth-child(1) { transition-delay: 0s; }
-.gallery-item:nth-child(2) { transition-delay: 0.06s; }
-.gallery-item:nth-child(3) { transition-delay: 0.12s; }
-.gallery-item:nth-child(4) { transition-delay: 0.03s; }
-.gallery-item:nth-child(5) { transition-delay: 0.09s; }
-.gallery-item:nth-child(6) { transition-delay: 0.15s; }
+.gallery-item:nth-child(2) { transition-delay: 0.05s; }
+.gallery-item:nth-child(3) { transition-delay: 0.1s; }
+.gallery-item:nth-child(4) { transition-delay: 0.02s; }
+.gallery-item:nth-child(5) { transition-delay: 0.07s; }
+.gallery-item:nth-child(6) { transition-delay: 0.12s; }
+
+/* 退出时不需要交错 */
+.gallery-item:not(.visible) { transition-delay: 0s; }
 
 /* ===== 图片加载 ===== */
 .img-loading {

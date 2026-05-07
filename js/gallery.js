@@ -253,8 +253,8 @@ const Gallery = {
                 }
             });
         }, {
-            threshold: 0.1,
-            rootMargin: '0px 0px -30px 0px'
+            threshold: [0, 0.1],
+            rootMargin: '0px 0px -8% 0px'
         });
 
         document.querySelectorAll('.scroll-animate').forEach(el => {
