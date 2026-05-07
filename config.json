@@ -874,8 +874,14 @@
         {
           "id": "album-1778166917487",
           "name": "沙滩",
-          "cover": null,
-          "images": []
+          "cover": "https://raw.githubusercontent.com/hahahua-k/travel-photos/main/images/album-1778166917487/1778196787596-thumb-IMG_20251003_172912.jpg",
+          "images": [
+            {
+              "url": "https://raw.githubusercontent.com/hahahua-k/travel-photos/main/images/album-1778166917487/1778196787596-IMG_20251003_172912.jpg",
+              "thumbnail": "https://raw.githubusercontent.com/hahahua-k/travel-photos/main/images/album-1778166917487/1778196787596-thumb-IMG_20251003_172912.jpg",
+              "compressed": false
+            }
+          ]
         },
         {
           "id": "album-1778167096478",
