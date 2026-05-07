@@ -148,8 +148,8 @@ const App = {
                 }
             });
         }, {
-            threshold: 0.15,
-            rootMargin: '0px 0px -60px 0px'
+            threshold: 0.12,
+            rootMargin: '0px 0px -40px 0px'
         });
 
         setTimeout(() => {
@@ -157,6 +157,26 @@ const App = {
                 observer.observe(el);
             });
         }, 100);
+
+        // 背景光球视差
+        const orbs = document.querySelectorAll('.bg-orb');
+        if (orbs.length) {
+            let ticking = false;
+            window.addEventListener('scroll', () => {
+                if (!ticking) {
+                    requestAnimationFrame(() => {
+                        const scrollY = window.scrollY;
+                        orbs.forEach((orb, i) => {
+                            const speed = (i + 1) * 0.015;
+                            const y = scrollY * speed;
+                            orb.style.transform = `translateY(${y}px)`;
+                        });
+                        ticking = false;
+                    });
+                    ticking = true;
+                }
+            }, { passive: true });
+        }
     }
 };
 

@@ -123,6 +123,14 @@ body {
     z-index: 1;
 }
 
+.scroll-animate {
+    opacity: 0;
+}
+
+.scroll-animate.visible {
+    opacity: 1;
+}
+
 .container {
     max-width: 1200px;
     margin: 0 auto;
