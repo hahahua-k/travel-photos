@@ -414,6 +414,7 @@ header p {
     cursor: grab;
     scrollbar-width: none;
     -ms-overflow-style: none;
+    scroll-behavior: auto;
 }
 
 .sections-track::-webkit-scrollbar {

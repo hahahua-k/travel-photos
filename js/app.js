@@ -200,34 +200,38 @@ const App = {
         let lastTime = 0;
         let rafId = null;
         let autoScrollPaused = false;
-        let autoDirection = 1;
-        let autoSpeed = 0.6;
+        let autoSpeed = 0.42;
 
-        // 自动流动
         const autoScroll = () => {
             if (isDown || autoScrollPaused) {
                 requestAnimationFrame(autoScroll);
                 return;
             }
 
-            track.scrollLeft += autoSpeed * autoDirection;
+            track.scrollLeft += autoSpeed;
 
-            if (track.scrollLeft >= track.scrollWidth - track.clientWidth - 2) {
-                autoDirection = -1;
-            } else if (track.scrollLeft <= 2) {
-                autoDirection = 1;
+            // 到达末尾时无缝跳回开头
+            if (track.scrollLeft >= track.scrollWidth - track.clientWidth - 1) {
+                track.scrollLeft = 0;
             }
 
             requestAnimationFrame(autoScroll);
         };
 
-        // 暂停自动滚动
         const pauseAuto = (duration) => {
             autoScrollPaused = true;
             if (duration) {
                 setTimeout(() => { autoScrollPaused = false; }, duration);
             }
         };
+
+        const resumeAuto = (delay) => {
+            setTimeout(() => { autoScrollPaused = false; }, delay || 3000);
+        };
+
+        // 暴露给外部调用（地图标记点击用）
+        track._pauseAuto = pauseAuto;
+        track._resumeAuto = resumeAuto;
 
         const onStart = (x) => {
             isDown = true;
@@ -257,12 +261,10 @@ const App = {
             isDown = false;
             track.style.cursor = 'grab';
 
-            // 惯性滚动
-            let v = velocity * 200;
+            let v = velocity * 180;
             const decay = () => {
                 if (Math.abs(v) < 0.5) {
-                    // 惯性结束后恢复自动滚动
-                    setTimeout(() => { autoScrollPaused = false; }, 1500);
+                    resumeAuto(2000);
                     return;
                 }
                 track.scrollLeft -= v;
@@ -278,14 +280,39 @@ const App = {
 
         track.addEventListener('touchstart', (e) => { onStart(e.touches[0].pageX); pauseAuto(); }, { passive: true });
         track.addEventListener('touchmove', (e) => onMove(e.touches[0].pageX), { passive: true });
-        track.addEventListener('touchend', () => { onEnd(); pauseAuto(2000); });
+        track.addEventListener('touchend', () => { onEnd(); resumeAuto(2000); });
 
-        // 鼠标悬停暂停
         track.addEventListener('mouseenter', () => { autoScrollPaused = true; });
         track.addEventListener('mouseleave', () => { autoScrollPaused = false; });
 
-        // 启动自动流动
         requestAnimationFrame(autoScroll);
+    },
+
+    focusSection(sectionId, scroll = true) {
+        document.querySelectorAll('.map-marker').forEach(m => {
+            m.classList.toggle('active', m.dataset.sectionId === sectionId);
+        });
+
+        if (scroll) {
+            const block = document.querySelector(`.section-block[data-section-id="${sectionId}"]`);
+            const track = document.getElementById('sections-track');
+            if (block && track) {
+                // 暂停自动滚动
+                if (track._pauseAuto) track._pauseAuto();
+
+                const trackRect = track.getBoundingClientRect();
+                const blockRect = block.getBoundingClientRect();
+                const offset = blockRect.left - trackRect.left - (trackRect.width / 2) + (blockRect.width / 2);
+
+                track.scrollTo({
+                    left: track.scrollLeft + offset,
+                    behavior: 'smooth'
+                });
+
+                // 4秒后恢复自动滚动
+                if (track._resumeAuto) track._resumeAuto(4000);
+            }
+        }
     },
 
     focusSection(sectionId, scroll = true) {
