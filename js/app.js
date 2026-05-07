@@ -144,7 +144,8 @@ const App = {
             entries.forEach(entry => {
                 if (entry.isIntersecting) {
                     entry.target.classList.add('visible');
-                    observer.unobserve(entry.target);
+                } else {
+                    entry.target.classList.remove('visible');
                 }
             });
         }, {
@@ -158,7 +159,6 @@ const App = {
             });
         }, 100);
 
-        // 背景光球视差
         const orbs = document.querySelectorAll('.bg-orb');
         if (orbs.length) {
             let ticking = false;
