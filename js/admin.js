@@ -214,7 +214,7 @@ const Admin = {
         const section = this.config.sections.find(s => s.id === this.currentSectionId);
 
         if (!section || !section.albums || section.albums.length === 0) {
-            list.innerHTML = '<p style="text-align: center; color: rgba(255,255,255,0.25); grid-column: 1 / -1;">暂无相册</p>';
+            list.innerHTML = '<p style="text-align: center; color: rgba(255,255,255,0.25); grid-column: 1 / -1;">暂无相册，请先创建相册</p>';
             return;
         }
 
@@ -223,16 +223,30 @@ const Admin = {
             if (coverUrl.includes('raw.githubusercontent.com')) {
                 coverUrl = `https://wsrv.nl/?url=${encodeURIComponent(coverUrl)}&w=200&q=60&output=webp`;
             }
+            const imgCount = album.images ? album.images.length : 0;
             return `
                 <div class="album-item">
                     <img src="${coverUrl}" alt="${album.name}" onerror="this.src='https://picsum.photos/150/120?random=${index}'">
                     <div class="album-item-name">${album.name}</div>
-                    <div class="album-item-count">${album.images ? album.images.length : 0} 张</div>
-                    <button class="album-edit-btn" onclick="Admin.editAlbum('${album.id}')">编辑</button>
-                    <button class="album-delete-btn" onclick="Admin.deleteAlbum('${album.id}')">&times;</button>
+                    <div class="album-item-count">${imgCount} 张</div>
+                    <div class="album-item-buttons">
+                        <button class="btn btn-primary btn-sm" onclick="Admin.triggerUpload('${album.id}')">上传图片</button>
+                        <button class="btn btn-sm" style="background:rgba(255,255,255,0.1);color:rgba(255,255,255,0.7)" onclick="Admin.editAlbum('${album.id}')">编辑</button>
+                        <button class="btn btn-danger btn-sm" onclick="Admin.deleteAlbum('${album.id}')">删除</button>
+                    </div>
                 </div>
             `;
         }).join('');
+    },
+
+    triggerUpload(albumId) {
+        const section = this.config.sections.find(s => s.id === this.currentSectionId);
+        if (!section) return;
+        const album = section.albums.find(a => a.id === albumId);
+        if (!album) return;
+
+        this.pendingAlbum = album;
+        document.getElementById('album-file-input').click();
     },
 
     showAddAlbumForm() {
