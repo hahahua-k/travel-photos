@@ -886,8 +886,14 @@
         {
           "id": "album-1778167096478",
           "name": "学校",
-          "cover": null,
-          "images": []
+          "cover": "https://raw.githubusercontent.com/hahahua-k/travel-photos/main/images/album-1778167096478/1778196809576-thumb-AGC9.9_R2_20251213_121603356.jpg",
+          "images": [
+            {
+              "url": "https://raw.githubusercontent.com/hahahua-k/travel-photos/main/images/album-1778167096478/1778196809576-AGC9.9_R2_20251213_121603356.jpg",
+              "thumbnail": "https://raw.githubusercontent.com/hahahua-k/travel-photos/main/images/album-1778167096478/1778196809576-thumb-AGC9.9_R2_20251213_121603356.jpg",
+              "compressed": false
+            }
+          ]
         }
       ]
     },
