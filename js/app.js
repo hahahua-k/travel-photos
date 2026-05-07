@@ -31,62 +31,47 @@ const App = {
         }
     },
 
-    showDemoData() {
-        this.config = {
-            regions: [
-                {
-                    id: 'demo-1',
-                    name: '示例相册',
-                    cover: 'https://picsum.photos/400/300?random=1',
-                    images: [
-                        'https://picsum.photos/800/600?random=1',
-                        'https://picsum.photos/800/600?random=2',
-                        'https://picsum.photos/800/600?random=3'
-                    ],
-                    protected: false
-                }
-            ]
-        };
-        this.renderRegions();
-    },
-
     renderRegions() {
         const grid = document.getElementById('regions-grid');
         grid.innerHTML = '';
 
         if (!this.config || !this.config.regions || this.config.regions.length === 0) {
-            grid.innerHTML = '<p style="text-align: center; color: #666; grid-column: 1 / -1;">暂无相册，请在管理页面添加</p>';
+            grid.innerHTML = '<p class="empty-hint">暂无相册，请在管理页面添加</p>';
             return;
         }
 
         this.config.regions.forEach((region, index) => {
-            const card = document.createElement('div');
-            card.className = `card scroll-animate delay-${(index % 6) + 1}`;
-            card.dataset.regionId = region.id;
-
             const imageCount = region.images ? region.images.length : 0;
-            let coverUrl = region.cover || `https://picsum.photos/400/300?random=${index}`;
+            let coverUrl = region.cover || `https://picsum.photos/800/500?random=${index}`;
             if (coverUrl.includes('raw.githubusercontent.com')) {
-                coverUrl = `https://wsrv.nl/?url=${encodeURIComponent(coverUrl)}&w=600&q=60&output=webp`;
+                coverUrl = `https://wsrv.nl/?url=${encodeURIComponent(coverUrl)}&w=1200&q=70&output=webp`;
             }
 
-            card.innerHTML = `
-                <div class="card-image-wrapper">
-                    <img src="${coverUrl}" 
-                         alt="${region.name}" 
-                         class="card-image img-loading"
-                         onerror="this.src='https://picsum.photos/400/300?random=${index}'"
-                         onload="this.classList.remove('img-loading'); this.classList.add('img-loaded')">
+            const isEven = index % 2 === 0;
+            const section = document.createElement('div');
+            section.className = 'album-row scroll-animate';
+            section.dataset.regionId = region.id;
+
+            section.innerHTML = `
+                <div class="album-row-inner ${isEven ? '' : 'reverse'}">
+                    <div class="album-cover">
+                        <img src="${coverUrl}" alt="${region.name}" loading="lazy"
+                             onerror="this.src='https://picsum.photos/800/500?random=${index}'">
+                        ${region.protected ? '<div class="album-lock"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>' : ''}
+                    </div>
+                    <div class="album-info">
+                        <span class="album-tag">相册 ${String(index + 1).padStart(2, '0')}</span>
+                        <h2 class="album-title">${region.name}</h2>
+                        <p class="album-meta">${imageCount} 张照片</p>
+                        <div class="album-arrow">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><polyline points="12 5 19 12 12 19"/></svg>
+                        </div>
+                    </div>
                 </div>
-                <div class="card-content">
-                    <h3 class="card-title">${region.name}</h3>
-                    <p class="card-count">${imageCount} 张照片</p>
-                </div>
-                ${region.protected ? '<div class="card-lock">🔒</div>' : ''}
             `;
 
-            card.addEventListener('click', () => this.handleRegionClick(region));
-            grid.appendChild(card);
+            section.addEventListener('click', () => this.handleRegionClick(region));
+            grid.appendChild(section);
         });
     },
 
@@ -163,8 +148,8 @@ const App = {
                 }
             });
         }, {
-            threshold: 0.1,
-            rootMargin: '0px 0px -50px 0px'
+            threshold: 0.15,
+            rootMargin: '0px 0px -60px 0px'
         });
 
         setTimeout(() => {
