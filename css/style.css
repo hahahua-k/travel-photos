@@ -271,7 +271,7 @@ header p {
     perspective-origin: 50% 40%;
     max-width: 900px;
     margin: 0 auto;
-    height: 500px;
+    height: 420px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -285,8 +285,8 @@ header p {
 
 .map-scene {
     position: relative;
-    width: 600px;
-    height: 480px;
+    width: 560px;
+    height: 490px;
     transform-style: preserve-3d;
     transform: rotateX(25deg) rotateY(-15deg);
     transition: transform 0.1s linear;

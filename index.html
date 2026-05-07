@@ -32,21 +32,50 @@
         <section class="map-section">
             <div class="map-wrapper" id="map-wrapper">
                 <div class="map-scene" id="map-scene">
-                    <svg class="china-map" id="china-map" viewBox="0 0 1000 800" xmlns="http://www.w3.org/2000/svg">
+                    <svg class="china-map" id="china-map" viewBox="0 0 800 700" xmlns="http://www.w3.org/2000/svg">
                         <defs>
                             <linearGradient id="mapGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                                <stop offset="0%" style="stop-color:rgba(67,97,238,0.15);stop-opacity:1" />
-                                <stop offset="100%" style="stop-color:rgba(114,9,183,0.1);stop-opacity:1" />
+                                <stop offset="0%" style="stop-color:rgba(67,97,238,0.2);stop-opacity:1" />
+                                <stop offset="50%" style="stop-color:rgba(114,9,183,0.12);stop-opacity:1" />
+                                <stop offset="100%" style="stop-color:rgba(6,214,160,0.08);stop-opacity:1" />
                             </linearGradient>
                             <filter id="mapGlow">
-                                <feGaussianBlur stdDeviation="2" result="blur" />
+                                <feGaussianBlur stdDeviation="3" result="blur" />
                                 <feComposite in="SourceGraphic" in2="blur" operator="over" />
                             </filter>
+                            <filter id="mapShadow">
+                                <feDropShadow dx="0" dy="4" stdDeviation="8" flood-color="rgba(67,97,238,0.3)" />
+                            </filter>
                         </defs>
-                        <path class="map-outline" d="M530,80 L580,75 L620,90 L660,85 L700,100 L730,95 L750,110 L770,105 L790,120 L810,115 L830,130 L840,150 L850,170 L860,190 L865,220 L870,250 L875,280 L880,310 L875,340 L870,370 L865,400 L860,420 L850,440 L840,460 L830,480 L820,500 L810,520 L800,530 L790,540 L780,550 L770,560 L750,570 L730,580 L710,590 L690,600 L670,610 L650,620 L630,630 L610,640 L590,650 L570,660 L550,670 L530,680 L510,685 L490,680 L470,670 L450,660 L430,650 L410,640 L390,630 L370,620 L350,610 L330,600 L310,585 L290,570 L270,550 L260,530 L250,510 L245,490 L240,470 L235,450 L230,430 L225,410 L220,390 L215,370 L210,350 L205,330 L200,310 L195,290 L190,270 L185,250 L180,230 L175,210 L170,190 L165,170 L160,150 L155,130 L160,110 L170,95 L185,85 L200,80 L220,78 L240,75 L260,72 L280,70 L300,72 L320,75 L340,78 L360,82 L380,85 L400,88 L420,90 L440,88 L460,85 L480,82 L500,80 L530,80 Z"
-                              fill="url(#mapGrad)" stroke="rgba(67,97,238,0.3)" stroke-width="1.5" filter="url(#mapGlow)" />
-                        <path class="map-grid" d="M0,200 L1000,200 M0,400 L1000,400 M0,600 L1000,600 M200,0 L200,800 M400,0 L400,800 M600,0 L600,800 M800,0 L800,800"
-                              stroke="rgba(255,255,255,0.02)" stroke-width="0.5" fill="none" />
+                        <!-- 中国地图轮廓 -->
+                        <path class="map-outline" d="
+                            M420,60 L440,55 L460,58 L480,52 L500,55 L520,50 L540,55 L560,52 L580,58 L600,55 L620,60 L635,65 L650,72
+                            L660,80 L668,90 L672,100 L675,110 L678,125 L680,140 L682,155 L685,170 L688,185 L690,200 L692,215 L695,230
+                            L698,245 L700,260 L702,275 L705,290 L708,305 L710,320 L712,335 L715,350 L718,365 L720,380 L722,395
+                            L720,410 L715,425 L710,440 L705,455 L700,468 L695,480 L690,490 L685,500 L680,510 L675,518 L670,525
+                            L660,535 L650,542 L640,548 L630,555 L620,560 L610,565 L600,570 L590,575 L580,580 L570,585 L558,590
+                            L545,595 L532,600 L520,605 L508,610 L495,615 L482,620 L470,625 L458,630 L445,635 L432,640 L420,642
+                            L408,640 L395,635 L382,628 L370,620 L358,612 L345,605 L332,598 L320,590 L308,582 L295,575 L282,568
+                            L270,560 L258,552 L245,545 L232,538 L220,530 L208,522 L195,515 L182,508 L170,500 L158,492 L145,485
+                            L132,478 L120,470 L108,462 L95,455 L82,448 L70,440 L60,430 L52,420 L48,410 L45,400 L42,390
+                            L40,380 L38,370 L36,360 L34,350 L32,340 L30,330 L28,320 L26,310 L24,300 L22,290 L20,280
+                            L18,270 L16,260 L14,250 L12,240 L10,230 L8,220 L6,210 L4,200 L2,190 L0,180
+                            L2,170 L5,160 L10,150 L18,140 L28,130 L40,122 L55,115 L70,108 L85,102 L100,98 L115,95
+                            L130,92 L145,90 L160,88 L175,86 L190,85 L205,84 L220,83 L235,82 L250,80 L265,78 L280,76
+                            L295,74 L310,72 L325,70 L340,68 L355,66 L370,64 L385,62 L400,60 L420,60 Z
+                            M620,560 L630,550 L645,555 L655,565 L660,575 L665,585 L668,595 L670,605 L668,615 L660,620
+                            L650,618 L640,612 L630,605 L622,598 L615,590 L610,580 L612,570 L620,560 Z
+                            M660,150 L670,148 L680,152 L688,158 L692,165 L695,175 L698,185 L700,195 L698,205 L692,210
+                            L685,208 L678,202 L672,195 L668,188 L665,180 L662,172 L660,162 L660,150 Z
+                        "
+                        fill="url(#mapGrad)" stroke="rgba(67,97,238,0.4)" stroke-width="1.5" filter="url(#mapShadow)" />
+                        <!-- 台湾 -->
+                        <ellipse cx="720" cy="460" rx="15" ry="25" fill="url(#mapGrad)" stroke="rgba(67,97,238,0.3)" stroke-width="1" transform="rotate(-15, 720, 460)" />
+                        <!-- 海南 -->
+                        <ellipse cx="580" cy="610" rx="18" ry="14" fill="url(#mapGrad)" stroke="rgba(67,97,238,0.3)" stroke-width="1" />
+                        <!-- 网格线 -->
+                        <path class="map-grid" d="M0,175 L800,175 M0,350 L800,350 M0,525 L800,525 M200,0 L200,700 M400,0 L400,700 M600,0 L600,700"
+                              stroke="rgba(255,255,255,0.015)" stroke-width="0.5" fill="none" />
                     </svg>
                     <div class="map-markers" id="map-markers"></div>
                 </div>
