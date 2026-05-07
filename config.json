@@ -688,6 +688,13 @@
       "mapX": 2,
       "mapY": 3,
       "albums": []
+    },
+    {
+      "id": "section-1778161118092",
+      "name": "2",
+      "mapX": 4,
+      "mapY": 4,
+      "albums": []
     }
   ]
 }
