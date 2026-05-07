@@ -673,7 +673,14 @@
       "name": "青岛",
       "mapX": 75,
       "mapY": 40,
-      "albums": []
+      "albums": [
+        {
+          "id": "album-1778166013509",
+          "name": "唐岛湾",
+          "cover": null,
+          "images": []
+        }
+      ]
     },
     {
       "id": "section-1778160771402",
